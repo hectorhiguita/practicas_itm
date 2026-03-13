@@ -1,0 +1,202 @@
+name: Deploy to AWS ECS
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+# Required for OIDC authentication with AWS
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  validate-secrets:
+    name: Validate required secrets/variables
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check required secrets and variables
+        run: |
+          missing=()
+          [ -z "${{ secrets.AWS_ROLE_ARN }}" ]        && missing+=("AWS_ROLE_ARN (secret)")
+          [ -z "${{ vars.AWS_REGION }}" ]              && missing+=("AWS_REGION (variable)")
+          [ -z "${{ vars.ECR_REPOSITORY_URL }}" ]      && missing+=("ECR_REPOSITORY_URL (variable)")
+          [ -z "${{ vars.ECS_CLUSTER_NAME }}" ]        && missing+=("ECS_CLUSTER_NAME (variable)")
+          [ -z "${{ vars.ECS_SERVICE_NAME }}" ]        && missing+=("ECS_SERVICE_NAME (variable)")
+          [ -z "${{ vars.ECS_CONTAINER_NAME }}" ]      && missing+=("ECS_CONTAINER_NAME (variable)")
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "ERROR: The following required secrets/variables are not set:"
+            printf '  - %s\n' "${missing[@]}"
+            echo ""
+            echo "See DEPLOY_AWS_ECS.md for setup instructions."
+            exit 1
+          fi
+          echo "All required secrets and variables are present."
+
+  build-and-push:
+    name: Build and push Docker image to ECR
+    runs-on: ubuntu-latest
+    needs: validate-secrets
+    outputs:
+      image-uri: ${{ steps.image-meta.outputs.image_uri }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region "${{ vars.AWS_REGION }}" \
+            | docker login --username AWS --password-stdin \
+                "$(echo "${{ vars.ECR_REPOSITORY_URL }}" | cut -d/ -f1)"
+
+      - name: Set image metadata
+        id: image-meta
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          IMAGE_URI="${{ vars.ECR_REPOSITORY_URL }}:${SHORT_SHA}"
+          echo "image_uri=${IMAGE_URI}" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${SHORT_SHA}"  >> "$GITHUB_OUTPUT"
+
+      - name: Build Docker image
+        run: |
+          docker build -t "${{ steps.image-meta.outputs.image_uri }}" .
+
+      - name: Push Docker image (SHA tag)
+        run: |
+          docker push "${{ steps.image-meta.outputs.image_uri }}"
+
+      - name: Tag and push as latest (main branch only)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          docker tag "${{ steps.image-meta.outputs.image_uri }}" \
+                     "${{ vars.ECR_REPOSITORY_URL }}:latest"
+          docker push "${{ vars.ECR_REPOSITORY_URL }}:latest"
+
+  deploy-to-ecs:
+    name: Deploy to ECS
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: production
+
+    env:
+      IMAGE_URI: ${{ needs.build-and-push.outputs.image-uri }}
+
+    steps:
+      - name: Install jq
+        run: |
+          if ! command -v jq &>/dev/null; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq jq
+          fi
+          jq --version
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Validate IMAGE_URI
+        run: |
+          if [ -z "${IMAGE_URI}" ]; then
+            echo "ERROR: IMAGE_URI is empty. Build job may have failed."
+            exit 1
+          fi
+          echo "Deploying image: ${IMAGE_URI}"
+
+      - name: Get current task definition ARN from ECS service
+        id: get-task-def-arn
+        run: |
+          TASK_DEF_ARN="$(aws ecs describe-services \
+            --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
+            --services "${{ vars.ECS_SERVICE_NAME }}" \
+            --region "${{ vars.AWS_REGION }}" \
+            --query 'services[0].taskDefinition' \
+            --output text)"
+          if [ -z "${TASK_DEF_ARN}" ] || [ "${TASK_DEF_ARN}" = "None" ]; then
+            echo "ERROR: Could not retrieve current task definition ARN from service \
+          ${{ vars.ECS_SERVICE_NAME }} in cluster ${{ vars.ECS_CLUSTER_NAME }}."
+            exit 1
+          fi
+          echo "Current task definition ARN: ${TASK_DEF_ARN}"
+          echo "task_def_arn=${TASK_DEF_ARN}" >> "$GITHUB_OUTPUT"
+
+      - name: Describe current task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition "${{ steps.get-task-def-arn.outputs.task_def_arn }}" \
+            --region "${{ vars.AWS_REGION }}" \
+            --query 'taskDefinition' \
+            > task-definition.json
+          echo "Task definition retrieved successfully."
+
+      - name: Patch task definition with new image
+        env:
+          ECS_CONTAINER_NAME: ${{ vars.ECS_CONTAINER_NAME }}
+        run: |
+          jq '
+            del(
+              .taskDefinitionArn,
+              .revision,
+              .status,
+              .requiresAttributes,
+              .compatibilities,
+              .registeredAt,
+              .registeredBy
+            )
+            | .containerDefinitions = (
+                .containerDefinitions
+                | map(
+                    if .name == env.ECS_CONTAINER_NAME
+                    then .image = env.IMAGE_URI
+                    else .
+                    end
+                  )
+              )
+          ' task-definition.json > task-definition-patched.json
+
+          # Verify the target container was actually patched
+          jq -e '.containerDefinitions[] | select(.name == env.ECS_CONTAINER_NAME)' \
+            task-definition-patched.json >/dev/null || {
+            echo "ERROR: Container '${ECS_CONTAINER_NAME}' not found in task definition."
+            exit 1
+          }
+          echo "Task definition patched successfully."
+
+      - name: Register new task definition revision
+        id: register-task-def
+        run: |
+          NEW_TASK_DEF_ARN="$(aws ecs register-task-definition \
+            --cli-input-json file://task-definition-patched.json \
+            --region "${{ vars.AWS_REGION }}" \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)"
+          echo "New task definition ARN: ${NEW_TASK_DEF_ARN}"
+          echo "new_task_def_arn=${NEW_TASK_DEF_ARN}" >> "$GITHUB_OUTPUT"
+
+      - name: Update ECS service
+        run: |
+          aws ecs update-service \
+            --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
+            --service "${{ vars.ECS_SERVICE_NAME }}" \
+            --task-definition "${{ steps.register-task-def.outputs.new_task_def_arn }}" \
+            --region "${{ vars.AWS_REGION }}"
+          echo "ECS service updated."
+
+      - name: Wait for ECS service to stabilize
+        run: |
+          echo "Waiting for service '${{ vars.ECS_SERVICE_NAME }}' to stabilize..."
+          aws ecs wait services-stable \
+            --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
+            --services "${{ vars.ECS_SERVICE_NAME }}" \
+            --region "${{ vars.AWS_REGION }}"
+          echo "Deployment complete."
