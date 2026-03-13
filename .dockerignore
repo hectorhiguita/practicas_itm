@@ -2,13 +2,15 @@
 .git
 .gitignore
 .gitattributes
+.github/
 
 # Python
-__pycache__
+__pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+.venv/
 env/
 venv/
 *.egg-info/
@@ -22,27 +24,32 @@ htmlcov/
 .vscode/
 .idea/
 *.swp
-*.swo
-*.sublime-project
-*.sublime-workspace
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Documentación
-docs/
+# Tests
+tests/
+
+# Documentación y recursos no necesarios en runtime
 *.md
+*.pdf
+*.csv
+LOGOS/
+*.json
+
+# Archivos txt excepto requirements
+*.txt
+!requirements.txt
 
 # Docker
-Dockerfile
 docker-compose.yml
-.dockerignore
 
-# Variables de entorno
+# Variables de entorno (se inyectan en ECS Task Definition)
 .env
+.env.*
 
-# Otros
+# Logs y runtime
 *.log
-*.tmp
-.DS_Store
+*.pid

@@ -1,26 +1,41 @@
-# Usar imagen oficial de Python
-FROM python:3.11-slim
+# ── Stage 1: build deps ───────────────────────────────────────────────────────
+FROM python:3.11-slim AS builder
 
-# Establecer directorio de trabajo
 WORKDIR /app
 
-# Instalar dependencias del sistema
-RUN apt-get update && apt-get install -y \
-    gcc \
-    postgresql-client \
+RUN apt-get update && apt-get install -y --no-install-recommends gcc libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copiar archivos de requisitos
 COPY requirements.txt .
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-# Instalar dependencias de Python
-RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar código de la aplicación
-COPY . .
+# ── Stage 2: runtime ─────────────────────────────────────────────────────────
+FROM python:3.11-slim
 
-# Exponer puerto
+WORKDIR /app
+
+# Instalar solo librerías de runtime (no gcc)
+RUN apt-get update && apt-get install -y --no-install-recommends libpq5 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar dependencias ya instaladas
+COPY --from=builder /install /usr/local
+
+# Copiar código fuente
+COPY src/ ./src/
+COPY main.py .
+COPY seed_db_itm.py .
+
+# Usuario no-root para seguridad
+RUN adduser --disabled-password --gecos '' appuser && chown -R appuser /app
+USER appuser
+
 EXPOSE 5000
 
-# Comando por defecto
-CMD ["python", "main.py"]
+# Healthcheck apuntando al endpoint existente
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health')" || exit 1
+
+# Gunicorn: 2 workers, timeout generoso para cold start de RDS
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "60", "--access-logfile", "-", "src.api.app:app"]

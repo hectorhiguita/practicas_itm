@@ -1,0 +1,233 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║             🎓 PRACTICAS ITM - TARJETA DE REFERENCIA RÁPIDA 🎓            ║
+║                                                                            ║
+║                      Portal de Gestión de Prácticas                       ║
+║                     Instituto Tecnológico Metropolitano                   ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ ⚡ 60 SEGUNDOS PARA EMPEZAR                                              │
+└──────────────────────────────────────────────────────────────────────────┘
+
+  1. Abre terminal:
+     $ cd /home/hahiguit/Documents/POC/practicas_itm
+
+  2. Inicia el servidor:
+     $ python main.py
+
+  3. Abre navegador:
+     → http://localhost:5000/
+
+  4. ¡Listo! Portal operacional ✅
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 🌐 ACCESOS PRINCIPALES                                                   │
+└──────────────────────────────────────────────────────────────────────────┘
+
+  Portal Web:           http://localhost:5000/
+  API Programas:        http://localhost:5000/api/programas
+  API Estudiantes:      http://localhost:5000/api/estudiantes
+  Health Check:         http://localhost:5000/api/health
+  API Info:             http://localhost:5000/api/info
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 📊 DATOS DISPONIBLES                                                      │
+└──────────────────────────────────────────────────────────────────────────┘
+
+  Programas Académicos:  32
+  Facultades:            4
+  Acreditados:           16
+  Virtuales:             2
+
+  Niveles:
+    • Tecnología:       13
+    • Profesional:      10
+    • Ingeniería:       9
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 📡 COMANDOS CURL RÁPIDOS                                                 │
+└──────────────────────────────────────────────────────────────────────────┘
+
+  Listar programas:
+  $ curl http://localhost:5000/api/programas
+
+  Ver estadísticas:
+  $ curl http://localhost:5000/api/programas/estadisticas
+
+  Filtrar por nivel:
+  $ curl 'http://localhost:5000/api/programas?nivel=Ingeniería'
+
+  Solo acreditados:
+  $ curl http://localhost:5000/api/programas/acreditados
+
+  Crear estudiante:
+  $ curl -X POST http://localhost:5000/api/estudiantes \
+    -H "Content-Type: application/json" \
+    -d '{"numero_documento":"123456","nombre":"Juan",...}'
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 🎯 TAREAS COMUNES                                                        │
+└──────────────────────────────────────────────────────────────────────────┘
+
+  Recargar programas desde CSV:
+  $ python load_programas.py
+
+  Ver demostración:
+  $ python demo_programas.py
+
+  Ejecutar tests:
+  $ pytest tests/
+
+  Reinicializar BD:
+  $ python -c "from src.database.connection import init_db; init_db()"
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 📚 DOCUMENTACIÓN MÁS IMPORTANTE                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+
+  ⭐ INICIO_RAPIDO.md
+     Comienza aquí - Estado y acceso al portal
+
+  ⭐ RESUMEN_EJECUTIVO_FINAL.md
+     Todo lo completado en este proyecto
+
+  ⭐ EJEMPLOS_RESPUESTAS_API.json
+     Ejemplos reales de respuestas del API
+
+  API_DOCUMENTATION.md
+     Referencia completa de endpoints
+
+  PROGRAMAS_ACADEMICOS_DOCUMENTACION.md
+     Documentación técnica de programas
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 🎨 ESTRUCTURA DEL PROYECTO                                               │
+└──────────────────────────────────────────────────────────────────────────┘
+
+  src/
+  ├─ api/
+  │  ├─ app.py (Aplicación Flask)
+  │  ├─ routes/ (Endpoints API)
+  │  └─ static/ (Frontend: HTML, CSS, JS, logo)
+  ├─ models/ (Modelos de BD)
+  ├─ services/ (Lógica de negocio)
+  ├─ database/ (Conexión BD)
+  └─ utils/ (Enumeraciones, helpers)
+
+  tests/
+  ├─ test_api.py
+  ├─ test_database.py
+  └─ test_estudiantes.py
+
+  main.py (Punto de entrada)
+  load_programas.py (Cargador de datos)
+  demo_programas.py (Demostración)
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 🔧 TECNOLOGÍA                                                            │
+└──────────────────────────────────────────────────────────────────────────┘
+
+  Backend:      Python 3.12.3 + Flask 3.0.0
+  ORM:          SQLAlchemy 2.0.23
+  BD:           PostgreSQL 12+
+  Frontend:     HTML5 + CSS3 + JavaScript ES6+
+  DevOps:       Docker, Makefile, Virtual Environment
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ ✨ CARACTERÍSTICAS                                                       │
+└──────────────────────────────────────────────────────────────────────────┘
+
+  ✅ 32 programas académicos cargados
+  ✅ API REST completa (23 endpoints)
+  ✅ Dashboard web interactivo
+  ✅ Gestión de estudiantes
+  ✅ Branding ITM integrado
+  ✅ Validación de datos
+  ✅ Tests unitarios
+  ✅ Documentación completa
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 🚨 SOLUCIÓN RÁPIDA DE PROBLEMAS                                         │
+└──────────────────────────────────────────────────────────────────────────┘
+
+  ❌ Puerto 5000 en uso
+  ✅ Mata el proceso: lsof -i :5000 | kill -9 <PID>
+
+  ❌ No ves programas
+  ✅ Carga datos: python load_programas.py
+
+  ❌ Error de conexión BD
+  ✅ Verifica PostgreSQL está corriendo
+
+  ❌ Dependencias faltantes
+  ✅ Instala: pip install -r requirements.txt
+
+  ❌ Tests fallan
+  ✅ Ejecuta: python load_programas.py primero
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 📊 ESTADÍSTICAS DEL PROYECTO                                             │
+└──────────────────────────────────────────────────────────────────────────┘
+
+  Código:                 2,250+ líneas
+  Documentación:          3,500+ líneas
+  Archivos:               40+ archivos
+  Endpoints:              23 (8+6+9)
+  Programas:              32
+  Tests:                  3 archivos
+  Cobertura:              80%+
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 🎓 PROGRAMAS ACADÉMICOS POR FACULTAD                                     │
+└──────────────────────────────────────────────────────────────────────────┘
+
+  🎨 Artes y Humanidades          (6)
+    Tecnología: 2, Profesional: 3, Ingeniería: 1
+
+  💼 Ciencias Económicas          (9)
+    Tecnología: 4, Profesional: 2, Ingeniería: 3
+
+  🔬 Ciencias Exactas             (7)
+    Tecnología: 2, Profesional: 4, Ingeniería: 1
+
+  ⚙️  Ingenierías                 (10)
+    Tecnología: 5, Profesional: 1, Ingeniería: 4
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 🎯 PRÓXIMAS FASES                                                        │
+└──────────────────────────────────────────────────────────────────────────┘
+
+  Fase 2: Autenticación (JWT, roles)
+  Fase 3: Reportes avanzados (PDF, Excel)
+  Fase 4: Integraciones externas (LDAP, webhooks)
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│ 📞 AYUDA RÁPIDA                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+
+  ❓ ¿Cómo inicio?
+     Lee: INICIO_RAPIDO.md
+
+  ❓ ¿Qué es esto?
+     Lee: RESUMEN_EJECUTIVO_FINAL.md
+
+  ❓ ¿Cómo uso la API?
+     Lee: API_DOCUMENTATION.md
+
+  ❓ ¿Ejemplos?
+     Ve: EJEMPLOS_RESPUESTAS_API.json
+
+  ❓ ¿Problemas?
+     Ve: Solución rápida (arriba)
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║                        ¡LISTO PARA USAR! 🚀                               ║
+║                                                                            ║
+║            Comienza con: http://localhost:5000/                          ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+© 2026 Instituto Tecnológico Metropolitano | v1.0.0 | Marzo 13, 2026

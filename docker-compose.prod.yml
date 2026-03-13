@@ -1,0 +1,164 @@
+# Docker Compose para Scaling con Load Balancer
+# Usar: docker-compose -f docker-compose.prod.yml up -d
+#
+# Este archivo muestra cómo configurar múltiples instancias de la API
+# detrás de un Load Balancer local (NGINX) o externo (AWS ALB)
+
+version: '3.8'
+
+services:
+  # Load Balancer local (NGINX) - Opcional
+  # Descomentar si quieres un LB local
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: practicas_itm_lb
+  #   ports:
+  #     - "80:80"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #   depends_on:
+  #     - api_1
+  #     - api_2
+  #     - api_3
+  #   networks:
+  #     - practicas_network
+  #   restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: practicas_itm_db
+    environment:
+      POSTGRES_USER: practicas_user
+      POSTGRES_PASSWORD: practicas_password
+      POSTGRES_DB: practicas_itm
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U practicas_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - practicas_network
+    restart: unless-stopped
+
+  # Instancia 1 de la API
+  api_1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: practicas_itm_api_1
+    ports:
+      - "5001:5000"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: practicas_itm
+      DB_USER: practicas_user
+      DB_PASSWORD: practicas_password
+      FLASK_ENV: production
+      FLASK_DEBUG: False
+      INSTANCE_ID: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health')\" || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - practicas_network
+    restart: unless-stopped
+
+  # Instancia 2 de la API
+  api_2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: practicas_itm_api_2
+    ports:
+      - "5002:5000"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: practicas_itm
+      DB_USER: practicas_user
+      DB_PASSWORD: practicas_password
+      FLASK_ENV: production
+      FLASK_DEBUG: False
+      INSTANCE_ID: "2"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health')\" || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - practicas_network
+    restart: unless-stopped
+
+  # Instancia 3 de la API
+  api_3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: practicas_itm_api_3
+    ports:
+      - "5003:5000"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: practicas_itm
+      DB_USER: practicas_user
+      DB_PASSWORD: practicas_password
+      FLASK_ENV: production
+      FLASK_DEBUG: False
+      INSTANCE_ID: "3"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health')\" || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - practicas_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  practicas_network:
+    driver: bridge
+
+# Uso:
+# 1. Iniciar con 3 instancias de la API:
+#    docker-compose -f docker-compose.prod.yml up -d
+#
+# 2. Verificar estado:
+#    docker-compose -f docker-compose.prod.yml ps
+#
+# 3. Ver logs:
+#    docker-compose -f docker-compose.prod.yml logs -f api_1
+#
+# 4. Escalar dinámicamente (requiere remover los container_name):
+#    docker-compose -f docker-compose.prod.yml up -d --scale api=5
+#
+# 5. Parar servicios:
+#    docker-compose -f docker-compose.prod.yml down
+#
+# Para un Load Balancer externo (AWS ALB):
+#   - Configurar Target Group para apuntar a todos estos contenedores
+#   - Health Check: /api/health en puerto 5000
+#   - Balanceo: Round-robin automático

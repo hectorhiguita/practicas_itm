@@ -1,0 +1,91 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  AWS_REGION: "us-east-1"
+  ECR_REPOSITORY_URL: "450328359598.dkr.ecr.us-east-1.amazonaws.com/practicas-itm"
+  ECS_CLUSTER_NAME: "practicas-itm"
+  ECS_SERVICE_NAME: "practicas-itm-service"
+  ECS_CONTAINER_NAME: "practicas-itm"
+  DOCKER_DRIVER: overlay2
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+
+default:
+  interruptible: true
+
+build_and_push_image:
+  stage: build
+  image: docker:27.5.1
+  services:
+    - name: docker:27.5.1-dind
+      command:
+        - --tls=false
+  before_script:
+    - apk add --no-cache python3 py3-pip
+    - pip3 install --no-cache-dir awscli
+  script:
+    - export IMAGE_TAG="${CI_COMMIT_SHORT_SHA}"
+    - export IMAGE_URI="${ECR_REPOSITORY_URL}:${IMAGE_TAG}"
+    - aws ecr get-login-password --region "${AWS_REGION}" | docker login --username AWS --password-stdin "$(echo "${ECR_REPOSITORY_URL}" | cut -d/ -f1)"
+    - docker build -t "${IMAGE_URI}" .
+    - docker push "${IMAGE_URI}"
+    - |
+      if [ "${CI_COMMIT_BRANCH}" = "${CI_DEFAULT_BRANCH}" ]; then
+        docker tag "${IMAGE_URI}" "${ECR_REPOSITORY_URL}:latest"
+        docker push "${ECR_REPOSITORY_URL}:latest"
+      fi
+    - printf 'IMAGE_URI=%s\n' "${IMAGE_URI}" > build.env
+  artifacts:
+    reports:
+      dotenv: build.env
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_TAG'
+
+deploy_to_ecs:
+  stage: deploy
+  image: amazon/aws-cli:2.24.21
+  needs:
+    - job: build_and_push_image
+      artifacts: true
+  before_script:
+    - yum install -y jq >/dev/null
+  script:
+    - test -n "${IMAGE_URI}"
+    - export CURRENT_TASK_DEFINITION_ARN="$(aws ecs describe-services --cluster "${ECS_CLUSTER_NAME}" --services "${ECS_SERVICE_NAME}" --region "${AWS_REGION}" --query 'services[0].taskDefinition' --output text)"
+    - test "${CURRENT_TASK_DEFINITION_ARN}" != "None"
+    - aws ecs describe-task-definition --task-definition "${CURRENT_TASK_DEFINITION_ARN}" --region "${AWS_REGION}" --query 'taskDefinition' > task-definition.json
+    - |
+      jq '
+        del(
+          .taskDefinitionArn,
+          .revision,
+          .status,
+          .requiresAttributes,
+          .compatibilities,
+          .registeredAt,
+          .registeredBy
+        )
+        | .containerDefinitions = (
+            .containerDefinitions
+            | map(
+                if .name == env.ECS_CONTAINER_NAME
+                then .image = env.IMAGE_URI
+                else .
+                end
+              )
+          )
+      ' task-definition.json > task-definition-patched.json
+    - jq -e '.containerDefinitions[] | select(.name == env.ECS_CONTAINER_NAME)' task-definition-patched.json >/dev/null
+    - export NEW_TASK_DEFINITION_ARN="$(aws ecs register-task-definition --cli-input-json file://task-definition-patched.json --region "${AWS_REGION}" --query 'taskDefinition.taskDefinitionArn' --output text)"
+    - aws ecs update-service --cluster "${ECS_CLUSTER_NAME}" --service "${ECS_SERVICE_NAME}" --task-definition "${NEW_TASK_DEFINITION_ARN}" --region "${AWS_REGION}"
+    - aws ecs wait services-stable --cluster "${ECS_CLUSTER_NAME}" --services "${ECS_SERVICE_NAME}" --region "${AWS_REGION}"
+  environment:
+    name: production
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+    - if: '$CI_COMMIT_TAG'
+      when: manual

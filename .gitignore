@@ -13,4 +13,5 @@ htmlcov/
 *.swo
 .DS_Store
 venv/
+.venv/
 env/

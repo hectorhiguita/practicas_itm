@@ -7,6 +7,7 @@ from src.config import get_config
 from src.api.routes import estudiantes, facultades, carreras, programas
 from src.api.routes.importar import importar_bp
 from src.database.connection import test_connection
+from src.database.init_db import init_database
 
 def create_app(config=None):
     """
@@ -32,6 +33,9 @@ def create_app(config=None):
     else:
         app.config.from_object(get_config())
     
+    # Inicializar BD: crea tablas y siembra datos si está vacía
+    init_database()
+
     # Registrar blueprints
     app.register_blueprint(estudiantes.bp)
     app.register_blueprint(facultades.bp)
