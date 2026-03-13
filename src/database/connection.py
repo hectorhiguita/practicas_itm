@@ -1,7 +1,7 @@
 """
 Gestión de conexión a la base de datos
 """
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from src.config import get_config
 
@@ -38,6 +38,13 @@ def get_db():
     finally:
         db.close()
 
+def init_db():
+    """
+    Inicializa la base de datos creando todas las tablas
+    """
+    from src.models.base import Base
+    Base.metadata.create_all(bind=engine)
+
 def test_connection():
     """
     Prueba la conexión a la base de datos
@@ -47,7 +54,7 @@ def test_connection():
     """
     try:
         with engine.connect() as connection:
-            result = connection.execute("SELECT 1")
+            result = connection.execute(text("SELECT 1"))
             return result.fetchone() is not None
     except Exception as e:
         print(f"Error al conectar a la base de datos: {e}")

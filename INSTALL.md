@@ -48,8 +48,8 @@ Editar el archivo `.env` con tus credenciales de PostgreSQL:
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=practicas_itm
-DB_USER=tu_usuario_postgres
-DB_PASSWORD=tu_contraseña_postgres
+DB_USER=hahiguit
+DB_PASSWORD=Acuarius18*
 ```
 
 ### Paso 5: Crear la base de datos

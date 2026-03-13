@@ -1,0 +1,33 @@
+facultad,programa,nivel,duracion,perfil_profesional,acreditada,virtual
+Facultad de Artes y Humanidades,Artes Visuales,Profesional,9 semestres,Desarrolla proyectos de creación artística; participa en reflexiones contemporáneas sobre el arte y promueve investigación a través de la gestión cultural.,NO,NO
+Facultad de Artes y Humanidades,Cine,Profesional,9 semestres,Formación en producción; dirección y realización audiovisual para la industria cinematográfica y de contenidos.,NO,NO
+Facultad de Artes y Humanidades,Artes de la Grabación y Producción Musical,Profesional,10 semestres,Profesional en grabación; mezcla; masterización y producción musical para la industria del entretenimiento.,NO,NO
+Facultad de Artes y Humanidades,Tecnología en Informática Musical,Tecnología,6 semestres,Aplica herramientas informáticas y digitales al análisis; composición y producción musical.,NO,NO
+Facultad de Artes y Humanidades,Tecnología en Diseño Industrial,Tecnología,6 semestres,Diseña y desarrolla productos industriales con criterios funcionales; estéticos y de fabricación.,SI,NO
+Facultad de Artes y Humanidades,Ingeniería en Diseño Industrial,Ingeniería,10 semestres,Lidera proyectos de diseño y desarrollo de productos con visión ingenieril; innovadora y sostenible.,SI,NO
+Facultad de Ciencias Económicas y Administrativas,Tecnología en Gestión Administrativa,Tecnología,6 semestres,Gestiona procesos organizacionales; recursos y talento humano en empresas públicas y privadas.,SI,NO
+Facultad de Ciencias Económicas y Administrativas,Tecnología en Análisis de Costos y Presupuestos,Tecnología,6 semestres,Analiza; planifica y controla costos y presupuestos en organizaciones productivas y de servicios.,NO,SI
+Facultad de Ciencias Económicas y Administrativas,Tecnología en Calidad,Tecnología,6 semestres,Diseña e implementa sistemas de gestión de calidad y procesos de mejora continua.,SI,NO
+Facultad de Ciencias Económicas y Administrativas,Tecnología en Producción,Tecnología,6 semestres,Planifica; controla y optimiza procesos productivos en empresas manufactureras y de servicios.,SI,NO
+Facultad de Ciencias Económicas y Administrativas,Administración Tecnológica,Profesional,10 semestres,Dirige organizaciones con enfoque tecnológico; articulando gestión administrativa e innovación.,NO,NO
+Facultad de Ciencias Económicas y Administrativas,Administración del Deporte,Profesional,9 semestres,Gestiona organizaciones deportivas; eventos; infraestructura y proyectos del sector deporte.,NO,NO
+Facultad de Ciencias Económicas y Administrativas,Ingeniería Financiera y de Negocios,Ingeniería,10 semestres,Diseña estrategias financieras; evalúa proyectos de inversión y gestiona riesgos en entornos empresariales complejos.,NO,NO
+Facultad de Ciencias Económicas y Administrativas,Ingeniería de Producción,Ingeniería,10 semestres,Optimiza sistemas productivos; cadenas de suministro y procesos industriales con enfoque en eficiencia y calidad.,SI,NO
+Facultad de Ciencias Económicas y Administrativas,Ingeniería de la Calidad,Ingeniería,10 semestres,Lidera sistemas de gestión de calidad; auditorías y mejora de procesos con estándares internacionales.,NO,NO
+Facultad de Ciencias Exactas y Aplicadas,Tecnología en Mantenimiento de Equipo Biomédico,Tecnología,6 semestres,Instala; opera y mantiene equipos médicos en clínicas; hospitales y centros de salud.,SI,NO
+Facultad de Ciencias Exactas y Aplicadas,Tecnología en Construcción de Acabados Arquitectónicos,Tecnología,6 semestres,Supervisa y ejecuta procesos de acabados en obras de construcción con criterios técnicos y normativos.,SI,NO
+Facultad de Ciencias Exactas y Aplicadas,Ingeniería Biomédica,Ingeniería,10 semestres,Aplica principios de ingeniería al diseño; desarrollo y gestión de tecnologías médicas y sistemas de salud.,SI,NO
+Facultad de Ciencias Exactas y Aplicadas,Ciencias Ambientales,Profesional,9 semestres,Evalúa; gestiona y propone soluciones a problemas ambientales desde enfoques científicos e interdisciplinarios.,NO,NO
+Facultad de Ciencias Exactas y Aplicadas,Ciencia y Tecnología de los Alimentos,Profesional,10 semestres,Desarrolla; controla y garantiza la calidad de alimentos en la industria agroalimentaria.,NO,NO
+Facultad de Ciencias Exactas y Aplicadas,Física,Profesional,10 semestres,Investiga y aplica principios físicos en sectores como energía; materiales; tecnología y ciencias básicas.,NO,NO
+Facultad de Ciencias Exactas y Aplicadas,Química Industrial,Profesional,10 semestres,Diseña y optimiza procesos químicos industriales con énfasis en calidad; seguridad y sostenibilidad.,NO,NO
+Facultad de Ingenierías,Tecnología en Sistemas de Información,Tecnología,6 semestres,Desarrolla y administra sistemas de información para la gestión de datos en organizaciones.,SI,NO
+Facultad de Ingenierías,Tecnología en Telecomunicaciones,Tecnología,6 semestres,Instala; configura y mantiene redes e infraestructuras de comunicaciones.,SI,NO
+Facultad de Ingenierías,Tecnología en Electrónica,Tecnología,6 semestres,Diseña; construye y mantiene sistemas y circuitos electrónicos para aplicaciones industriales.,SI,NO
+Facultad de Ingenierías,Tecnología en Sistemas Electromecánicos,Tecnología,6 semestres,Opera y mantiene sistemas que integran componentes eléctricos y mecánicos en entornos industriales.,NO,NO
+Facultad de Ingenierías,Tecnología en Sistemas de Producción,Tecnología,6 semestres,Planifica y controla procesos de manufactura con uso de tecnologías productivas modernas.,NO,NO
+Facultad de Ingenierías,Ingeniería de Sistemas,Ingeniería,10 semestres,Diseña y desarrolla soluciones de software; arquitecturas de sistemas y proyectos tecnológicos complejos.,SI,NO
+Facultad de Ingenierías,Ingeniería de Telecomunicaciones,Ingeniería,10 semestres,Diseña redes de comunicación; sistemas inalámbricos y soluciones de conectividad a escala empresarial y regional.,SI,NO
+Facultad de Ingenierías,Ingeniería Electrónica,Ingeniería,10 semestres,Desarrolla sistemas embebidos; automatización y soluciones electrónicas para la industria.,SI,NO
+Facultad de Ingenierías,Ingeniería Electromecánica,Ingeniería,10 semestres,Integra conocimientos eléctricos y mecánicos para el diseño y mantenimiento de sistemas industriales complejos.,SI,NO
+Facultad de Ingenierías,Interpretación y Traducción Lengua de Señas – Español,Profesional,8 semestres,Interpreta y traduce en contextos comunicativos entre la comunidad sorda y oyente.,NO,SI

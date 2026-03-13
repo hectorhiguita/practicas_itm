@@ -34,12 +34,17 @@ class Facultad(Base):
         }
 
 class Carrera(Base):
-    """Modelo de Carrera"""
+    """Modelo de Carrera/Programa Académico"""
     __tablename__ = 'carreras'
     
     id = Column(Integer, primary_key=True)
     nombre = Column(String(255), nullable=False)
     descripcion = Column(String(500))
+    nivel = Column(String(100), nullable=False)  # Tecnología, Profesional, Ingeniería
+    duracion = Column(String(50), nullable=True)  # Ej: 6 semestres, 10 semestres
+    perfil_profesional = Column(String(1000), nullable=True)
+    acreditada = Column(Integer, default=0, nullable=False)  # 0=NO, 1=SI
+    virtual = Column(Integer, default=0, nullable=False)  # 0=NO, 1=SI
     facultad_id = Column(Integer, ForeignKey('facultades.id'), nullable=False)
     fecha_creacion = Column(DateTime, default=datetime.utcnow)
     
@@ -48,14 +53,20 @@ class Carrera(Base):
     estudiantes = relationship("Estudiante", back_populates="carrera", cascade="all, delete-orphan")
     
     def __repr__(self):
-        return f"<Carrera(id={self.id}, nombre='{self.nombre}', facultad_id={self.facultad_id})>"
+        return f"<Carrera(id={self.id}, nombre='{self.nombre}', nivel='{self.nivel}')>"
     
     def to_dict(self):
         return {
             'id': self.id,
             'nombre': self.nombre,
             'descripcion': self.descripcion,
+            'nivel': self.nivel,
+            'duracion': self.duracion,
+            'perfil_profesional': self.perfil_profesional,
+            'acreditada': bool(self.acreditada),
+            'virtual': bool(self.virtual),
             'facultad_id': self.facultad_id,
+            'facultad_nombre': self.facultad.nombre if self.facultad else None,
             'fecha_creacion': self.fecha_creacion.isoformat() if self.fecha_creacion else None
         }
 
@@ -70,6 +81,8 @@ class Estudiante(Base):
     email = Column(String(255), unique=True, nullable=False)
     telefono = Column(String(20))
     genero = Column(SQLEnum(Genero), nullable=False)
+    tiene_discapacidad = Column(String(255), nullable=True)
+    discapacidad_personalizada = Column(String(500), nullable=True)
     estado_practica = Column(SQLEnum(EstadoPractica), default=EstadoPractica.DISPONIBLE, nullable=False)
     facultad_id = Column(Integer, ForeignKey('facultades.id'), nullable=False)
     carrera_id = Column(Integer, ForeignKey('carreras.id'), nullable=False)
@@ -92,6 +105,8 @@ class Estudiante(Base):
             'email': self.email,
             'telefono': self.telefono,
             'genero': self.genero.value if self.genero else None,
+            'tiene_discapacidad': self.tiene_discapacidad,
+            'discapacidad_personalizada': self.discapacidad_personalizada,
             'estado_practica': self.estado_practica.value if self.estado_practica else None,
             'facultad_id': self.facultad_id,
             'carrera_id': self.carrera_id,

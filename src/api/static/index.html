@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prácticas profesionales ITM - Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="/static/logo-itm.png" alt="Logo ITM">
+                <h1>Prácticas Profesionales ITM</h1>
+                <p>Sistema de Gestión</p>
+            </div>
+            <nav class="menu">
+                <button class="menu-item active" data-section="dashboard">
+                    <span class="icon">📊</span>
+                    <span>Dashboard</span>
+                </button>
+                <button class="menu-item" data-section="estudiantes">
+                    <span class="icon">👨‍🎓</span>
+                    <span>Estudiantes</span>
+                </button>
+                <button class="menu-item" data-section="carreras">
+                    <span class="icon">📚</span>
+                    <span>Carreras</span>
+                </button>
+                <button class="menu-item" data-section="facultades">
+                    <span class="icon">🏫</span>
+                    <span>Facultades</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <h2 id="page-title">Dashboard</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary" id="add-btn" style="display: none;">
+                        + Agregar
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="content">
+                <!-- Dashboard Section -->
+                <section id="dashboard" class="section active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #4CAF50;">👨‍🎓</div>
+                            <div class="stat-content">
+                                <h3>Total Estudiantes</h3>
+                                <p class="stat-number" id="total-estudiantes">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #2196F3;">✓</div>
+                            <div class="stat-content">
+                                <h3>Disponibles</h3>
+                                <p class="stat-number" id="disponibles">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #FF9800;">💼</div>
+                            <div class="stat-content">
+                                <h3>Contratados</h3>
+                                <p class="stat-number" id="contratados">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #9C27B0;">📚</div>
+                            <div class="stat-content">
+                                <h3>Total Carreras</h3>
+                                <p class="stat-number" id="total-carreras">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #F44336;">🏫</div>
+                            <div class="stat-content">
+                                <h3>Total Facultades</h3>
+                                <p class="stat-number" id="total-facultades">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: #00BCD4;">✔</div>
+                            <div class="stat-content">
+                                <h3>Finalizados</h3>
+                                <p class="stat-number" id="finalizados">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="recent-activity">
+                        <h3>Estudiantes Recientes</h3>
+                        <div id="recent-list" class="list"></div>
+                    </div>
+                </section>
+
+                <!-- Estudiantes Section -->
+                <section id="estudiantes" class="section">
+                    <div class="section-header">
+                        <div class="search-bar">
+                            <input type="text" id="search-estudiantes" placeholder="Buscar por nombre, documento o email...">
+                        </div>
+                        <div class="filters">
+                            <select id="filter-estado">
+                                <option value="">Todos los estados</option>
+                                <option value="Disponible">Disponible</option>
+                                <option value="Contratado">Contratado</option>
+                                <option value="Por Finalizar">Por Finalizar</option>
+                                <option value="Finalizó">Finalizó</option>
+                            </select>
+                            <select id="filter-carrera">
+                                <option value="">Todas las carreras</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="estudiantes-list" class="list"></div>
+                </section>
+
+                <!-- Carreras Section -->
+                <section id="carreras" class="section">
+                    <div class="section-header">
+                        <div class="search-bar">
+                            <input type="text" id="search-carreras" placeholder="Buscar carrera...">
+                        </div>
+                    </div>
+                    <div id="carreras-list" class="list"></div>
+                </section>
+
+                <!-- Facultades Section -->
+                <section id="facultades" class="section">
+                    <div class="section-header">
+                        <div class="search-bar">
+                            <input type="text" id="search-facultades" placeholder="Buscar facultad...">
+                        </div>
+                    </div>
+                    <div id="facultades-list" class="list"></div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal para crear/editar -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modal-title">Agregar Nuevo</h2>
+            <form id="modal-form">
+                <div id="form-fields"></div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" id="cancel-btn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

@@ -2,6 +2,7 @@
 Tests para la base de datos
 """
 import pytest
+from sqlalchemy import inspect
 from src.database.connection import test_connection, SessionLocal, engine
 from src.models.base import Base, Facultad
 
@@ -16,7 +17,7 @@ def test_crear_tablas():
     Base.metadata.create_all(bind=engine)
     
     # Verificar que existen
-    inspector = __import__('sqlalchemy.inspect', fromlist=['inspect']).inspect(engine)
+    inspector = inspect(engine)
     tablas = inspector.get_table_names()
     
     assert 'facultades' in tablas

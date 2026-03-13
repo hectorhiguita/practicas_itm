@@ -4,6 +4,7 @@ Sistema modular en Python para gestionar prácticas estudiantiles, facultades, c
 
 ## ✨ Características Principales
 
+- ✅ **Dashboard Web**: Interfaz moderna y responsiva para gestionar todo
 - ✅ **Módulo de Estudiantes**: CRUD completo con 4 estados de práctica
 - ✅ **Módulo de Facultades**: Gestión de facultades y carreras
 - ✅ **API REST**: 17+ endpoints con filtros avanzados
@@ -39,8 +40,35 @@ python -m src.database.init_db
 python main.py
 ```
 
+**Accede al Dashboard:**
+```
+http://localhost:5000
+```
+
+## 🎨 Dashboard Web
+
+Se incluye un **dashboard web moderno y responsivo** para gestionar toda la aplicación:
+
+### Características del Dashboard
+- 📊 **Estadísticas en Tiempo Real**: Métricas de estudiantes, carreras y facultades
+- 👨‍🎓 **Gestión de Estudiantes**: CRUD completo con búsqueda y filtros
+- 📚 **Gestión de Carreras**: Crear, editar, eliminar carreras
+- 🏫 **Gestión de Facultades**: Administrar facultades
+- 🔍 **Búsqueda Avanzada**: Filtros por estado, carrera, etc.
+- 📱 **Responsivo**: Funciona en desktop, tablet y móvil
+- ✨ **Interfaz Intuitiva**: Diseño moderno con colores llamativos
+
+### Acceso Rápido
+1. Inicia el servidor: `python main.py`
+2. Abre en tu navegador: `http://localhost:5000`
+3. ¡Comienza a gestionar datos!
+
+Para más detalles sobre el dashboard, ver [DASHBOARD.md](DASHBOARD.md) o [QUICK_DASHBOARD.md](QUICK_DASHBOARD.md)
+
 ## 📚 Documentación
 
+- 🖥️ [Guía Rápida Dashboard](QUICK_DASHBOARD.md)
+- 📖 [Documentación del Dashboard](DASHBOARD.md)
 - 📖 [Guía de Instalación Detallada](INSTALL.md)
 - 🔌 [Referencia Completa de API](API_DOCUMENTATION.md)
 - 🛠️ [Guía de Contribución](CONTRIBUTING.md)

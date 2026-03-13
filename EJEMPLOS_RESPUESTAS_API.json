@@ -1,0 +1,348 @@
+{
+  "ejemplos_api": {
+    "url_base": "http://localhost:5000/api/programas",
+    "ejemplos": [
+      {
+        "nombre": "GET /api/programas",
+        "descripcion": "Obtener todos los programas",
+        "respuesta": {
+          "success": true,
+          "total": 32,
+          "data": [
+            {
+              "id": 1,
+              "nombre": "Artes Visuales",
+              "descripcion": null,
+              "nivel": "Profesional",
+              "duracion": "9 semestres",
+              "perfil_profesional": "Desarrolla proyectos de creación artística; participa en reflexiones contemporáneas sobre el arte y promueve investigación a través de la gestión cultural.",
+              "acreditada": false,
+              "virtual": false,
+              "facultad_id": 1,
+              "facultad_nombre": "Facultad de Artes y Humanidades",
+              "fecha_creacion": "2026-03-13T14:45:23.456789"
+            },
+            {
+              "id": 2,
+              "nombre": "Cine",
+              "descripcion": null,
+              "nivel": "Profesional",
+              "duracion": "9 semestres",
+              "perfil_profesional": "Formación en producción; dirección y realización audiovisual para la industria cinematográfica y de contenidos.",
+              "acreditada": false,
+              "virtual": false,
+              "facultad_id": 1,
+              "facultad_nombre": "Facultad de Artes y Humanidades",
+              "fecha_creacion": "2026-03-13T14:45:23.567890"
+            },
+            {
+              "id": 3,
+              "nombre": "Artes de la Grabación y Producción Musical",
+              "descripcion": null,
+              "nivel": "Profesional",
+              "duracion": "10 semestres",
+              "perfil_profesional": "Profesional en grabación; mezcla; masterización y producción musical para la industria del entretenimiento.",
+              "acreditada": false,
+              "virtual": false,
+              "facultad_id": 1,
+              "facultad_nombre": "Facultad de Artes y Humanidades",
+              "fecha_creacion": "2026-03-13T14:45:23.678901"
+            }
+          ]
+        }
+      },
+      {
+        "nombre": "GET /api/programas/1",
+        "descripcion": "Obtener programa específico por ID",
+        "respuesta": {
+          "success": true,
+          "data": {
+            "id": 1,
+            "nombre": "Artes Visuales",
+            "descripcion": null,
+            "nivel": "Profesional",
+            "duracion": "9 semestres",
+            "perfil_profesional": "Desarrolla proyectos de creación artística; participa en reflexiones contemporáneas sobre el arte y promueve investigación a través de la gestión cultural.",
+            "acreditada": false,
+            "virtual": false,
+            "facultad_id": 1,
+            "facultad_nombre": "Facultad de Artes y Humanidades",
+            "fecha_creacion": "2026-03-13T14:45:23.456789"
+          }
+        }
+      },
+      {
+        "nombre": "GET /api/programas/por-nivel/Tecnología",
+        "descripcion": "Obtener solo programas del nivel Tecnología",
+        "respuesta": {
+          "success": true,
+          "total": 13,
+          "nivel": "Tecnología",
+          "data": [
+            {
+              "id": 4,
+              "nombre": "Tecnología en Informática Musical",
+              "descripcion": null,
+              "nivel": "Tecnología",
+              "duracion": "6 semestres",
+              "perfil_profesional": "Aplica herramientas informáticas y digitales al análisis; composición y producción musical.",
+              "acreditada": false,
+              "virtual": false,
+              "facultad_id": 1,
+              "facultad_nombre": "Facultad de Artes y Humanidades",
+              "fecha_creacion": "2026-03-13T14:45:23.789012"
+            },
+            {
+              "id": 5,
+              "nombre": "Tecnología en Diseño Industrial",
+              "descripcion": null,
+              "nivel": "Tecnología",
+              "duracion": "6 semestres",
+              "perfil_profesional": "Diseña y desarrolla productos industriales con criterios funcionales; estéticos y de fabricación.",
+              "acreditada": true,
+              "virtual": false,
+              "facultad_id": 1,
+              "facultad_nombre": "Facultad de Artes y Humanidades",
+              "fecha_creacion": "2026-03-13T14:45:23.890123"
+            }
+          ]
+        }
+      },
+      {
+        "nombre": "GET /api/programas/acreditados",
+        "descripcion": "Obtener solo programas acreditados",
+        "respuesta": {
+          "success": true,
+          "total": 16,
+          "data": [
+            {
+              "id": 5,
+              "nombre": "Tecnología en Diseño Industrial",
+              "descripcion": null,
+              "nivel": "Tecnología",
+              "duracion": "6 semestres",
+              "perfil_profesional": "Diseña y desarrolla productos industriales con criterios funcionales; estéticos y de fabricación.",
+              "acreditada": true,
+              "virtual": false,
+              "facultad_id": 1,
+              "facultad_nombre": "Facultad de Artes y Humanidades",
+              "fecha_creacion": "2026-03-13T14:45:23.890123"
+            },
+            {
+              "id": 6,
+              "nombre": "Ingeniería en Diseño Industrial",
+              "descripcion": null,
+              "nivel": "Ingeniería",
+              "duracion": "10 semestres",
+              "perfil_profesional": "Lidera proyectos de diseño y desarrollo de productos con visión ingenieril; innovadora y sostenible.",
+              "acreditada": true,
+              "virtual": false,
+              "facultad_id": 1,
+              "facultad_nombre": "Facultad de Artes y Humanidades",
+              "fecha_creacion": "2026-03-13T14:45:23.901234"
+            }
+          ]
+        }
+      },
+      {
+        "nombre": "GET /api/programas/virtuales",
+        "descripcion": "Obtener solo programas virtuales",
+        "respuesta": {
+          "success": true,
+          "total": 2,
+          "data": [
+            {
+              "id": 8,
+              "nombre": "Tecnología en Análisis de Costos y Presupuestos",
+              "descripcion": null,
+              "nivel": "Tecnología",
+              "duracion": "6 semestres",
+              "perfil_profesional": "Analiza; planifica y controla costos y presupuestos en organizaciones productivas y de servicios.",
+              "acreditada": false,
+              "virtual": true,
+              "facultad_id": 2,
+              "facultad_nombre": "Facultad de Ciencias Económicas y Administrativas",
+              "fecha_creacion": "2026-03-13T14:45:24.012345"
+            },
+            {
+              "id": 33,
+              "nombre": "Interpretación y Traducción Lengua de Señas – Español",
+              "descripcion": null,
+              "nivel": "Profesional",
+              "duracion": "8 semestres",
+              "perfil_profesional": "Interpreta y traduce en contextos comunicativos entre la comunidad sorda y oyente.",
+              "acreditada": false,
+              "virtual": true,
+              "facultad_id": 4,
+              "facultad_nombre": "Facultad de Ingenierías",
+              "fecha_creacion": "2026-03-13T14:45:24.123456"
+            }
+          ]
+        }
+      },
+      {
+        "nombre": "GET /api/programas/estadisticas",
+        "descripcion": "Obtener estadísticas generales",
+        "respuesta": {
+          "success": true,
+          "data": {
+            "total_programas": 32,
+            "total_acreditados": 16,
+            "total_virtuales": 2,
+            "por_nivel": {
+              "Tecnología": 13,
+              "Profesional": 10,
+              "Ingeniería": 9
+            },
+            "por_facultad": {
+              "Facultad de Artes y Humanidades": 6,
+              "Facultad de Ciencias Económicas y Administrativas": 9,
+              "Facultad de Ciencias Exactas y Aplicadas": 7,
+              "Facultad de Ingenierías": 10
+            }
+          }
+        }
+      },
+      {
+        "nombre": "GET /api/programas?facultad_id=1",
+        "descripcion": "Filtrar programas por facultad",
+        "respuesta": {
+          "success": true,
+          "total": 6,
+          "data": [
+            {
+              "id": 1,
+              "nombre": "Artes Visuales",
+              "descripcion": null,
+              "nivel": "Profesional",
+              "duracion": "9 semestres",
+              "perfil_profesional": "Desarrolla proyectos de creación artística; participa en reflexiones contemporáneas sobre el arte y promueve investigación a través de la gestión cultural.",
+              "acreditada": false,
+              "virtual": false,
+              "facultad_id": 1,
+              "facultad_nombre": "Facultad de Artes y Humanidades",
+              "fecha_creacion": "2026-03-13T14:45:23.456789"
+            },
+            {
+              "id": 2,
+              "nombre": "Cine",
+              "descripcion": null,
+              "nivel": "Profesional",
+              "duracion": "9 semestres",
+              "perfil_profesional": "Formación en producción; dirección y realización audiovisual para la industria cinematográfica y de contenidos.",
+              "acreditada": false,
+              "virtual": false,
+              "facultad_id": 1,
+              "facultad_nombre": "Facultad de Artes y Humanidades",
+              "fecha_creacion": "2026-03-13T14:45:23.567890"
+            }
+          ]
+        }
+      },
+      {
+        "nombre": "GET /api/programas?nivel=Ingeniería",
+        "descripcion": "Filtrar programas por nivel",
+        "respuesta": {
+          "success": true,
+          "total": 9,
+          "data": [
+            {
+              "id": 6,
+              "nombre": "Ingeniería en Diseño Industrial",
+              "descripcion": null,
+              "nivel": "Ingeniería",
+              "duracion": "10 semestres",
+              "perfil_profesional": "Lidera proyectos de diseño y desarrollo de productos con visión ingenieril; innovadora y sostenible.",
+              "acreditada": true,
+              "virtual": false,
+              "facultad_id": 1,
+              "facultad_nombre": "Facultad de Artes y Humanidades",
+              "fecha_creacion": "2026-03-13T14:45:23.901234"
+            }
+          ]
+        }
+      },
+      {
+        "nombre": "POST /api/programas",
+        "descripcion": "Crear nuevo programa",
+        "request": {
+          "nombre": "Ingeniería de Software",
+          "nivel": "Ingeniería",
+          "facultad_id": 4,
+          "duracion": "10 semestres",
+          "perfil_profesional": "Diseña y desarrolla soluciones de software complejas",
+          "acreditada": true,
+          "virtual": false
+        },
+        "respuesta": {
+          "success": true,
+          "message": "Programa creado exitosamente",
+          "data": {
+            "id": 35,
+            "nombre": "Ingeniería de Software",
+            "descripcion": null,
+            "nivel": "Ingeniería",
+            "duracion": "10 semestres",
+            "perfil_profesional": "Diseña y desarrolla soluciones de software complejas",
+            "acreditada": true,
+            "virtual": false,
+            "facultad_id": 4,
+            "facultad_nombre": "Facultad de Ingenierías",
+            "fecha_creacion": "2026-03-13T15:00:00.000000"
+          }
+        }
+      },
+      {
+        "nombre": "PUT /api/programas/1",
+        "descripcion": "Actualizar programa existente",
+        "request": {
+          "acreditada": true,
+          "perfil_profesional": "Nuevo perfil actualizado"
+        },
+        "respuesta": {
+          "success": true,
+          "message": "Programa actualizado exitosamente",
+          "data": {
+            "id": 1,
+            "nombre": "Artes Visuales",
+            "descripcion": null,
+            "nivel": "Profesional",
+            "duracion": "9 semestres",
+            "perfil_profesional": "Nuevo perfil actualizado",
+            "acreditada": true,
+            "virtual": false,
+            "facultad_id": 1,
+            "facultad_nombre": "Facultad de Artes y Humanidades",
+            "fecha_creacion": "2026-03-13T14:45:23.456789"
+          }
+        }
+      },
+      {
+        "nombre": "DELETE /api/programas/35",
+        "descripcion": "Eliminar programa",
+        "respuesta": {
+          "success": true,
+          "message": "Programa eliminado exitosamente"
+        }
+      },
+      {
+        "nombre": "Error: Programa no encontrado",
+        "descripcion": "Respuesta cuando el programa no existe",
+        "respuesta": {
+          "success": false,
+          "error": "Programa no encontrado"
+        },
+        "http_code": 404
+      },
+      {
+        "nombre": "Error: Campos requeridos faltantes",
+        "descripcion": "Respuesta cuando faltan campos requeridos",
+        "respuesta": {
+          "success": false,
+          "error": "Campos requeridos: nombre, nivel, facultad_id"
+        },
+        "http_code": 400
+      }
+    ]
+  }
+}

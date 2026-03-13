@@ -1,9 +1,10 @@
 """
 Aplicación Flask - Punto de entrada principal para la API
 """
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
+import os
 from src.config import get_config
-from src.api.routes import estudiantes, facultades, carreras
+from src.api.routes import estudiantes, facultades, carreras, programas
 from src.database.connection import test_connection
 
 def create_app(config=None):
@@ -16,7 +17,13 @@ def create_app(config=None):
     Returns:
         Flask: Aplicación Flask configurada
     """
-    app = Flask(__name__)
+    # Get the root directory for static and template files
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+    
+    app = Flask(__name__, 
+                static_folder=static_dir,
+                static_url_path='/static')
     
     # Cargar configuración
     if config:
@@ -28,6 +35,7 @@ def create_app(config=None):
     app.register_blueprint(estudiantes.bp)
     app.register_blueprint(facultades.bp)
     app.register_blueprint(carreras.bp)
+    app.register_blueprint(programas.programas_bp)
     
     # Ruta de prueba
     @app.route('/api/health', methods=['GET'])
@@ -39,10 +47,38 @@ def create_app(config=None):
             'database': 'connected' if db_status else 'disconnected'
         }), 200 if db_status else 503
     
-    # Ruta raíz
+    # Ruta raíz - Servir dashboard
     @app.route('/', methods=['GET'])
-    def index():
-        """Página de inicio de la API"""
+    def dashboard():
+        """Serve the dashboard"""
+        try:
+            # Read the static/index.html file
+            static_path = os.path.join(os.path.dirname(__file__), 'static', 'index.html')
+            with open(static_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        except FileNotFoundError:        return jsonify({
+            'nombre': 'Practicas ITM - API',
+            'version': '1.0.0',
+            'descripcion': 'Sistema de gestión de prácticas universitarias',
+            'endpoints': {
+                'health': '/api/health',
+                'estudiantes': '/api/estudiantes',
+                'facultades': '/api/facultades',
+                'carreras': '/api/carreras',
+                'programas': '/api/programas'
+            }
+        }), 200
+    
+    # Servir archivos estáticos
+    @app.route('/static/<path:filename>')
+    def serve_static(filename):
+        """Serve static files"""
+        return send_from_directory(app.static_folder, filename)
+    
+    # Ruta API info
+    @app.route('/api/info', methods=['GET'])
+    def api_info():
+        """Información de la API"""
         return jsonify({
             'nombre': 'Practicas ITM - API',
             'version': '1.0.0',
@@ -51,7 +87,8 @@ def create_app(config=None):
                 'health': '/api/health',
                 'estudiantes': '/api/estudiantes',
                 'facultades': '/api/facultades',
-                'carreras': '/api/carreras'
+                'carreras': '/api/carreras',
+                'programas': '/api/programas'
             }
         }), 200
     

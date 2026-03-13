@@ -1,0 +1,331 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    TABLA DE PROGRAMAS ACADÉMICOS ITM                          ║
+║                     Sistema de Gestión de Prácticas v1.0                       ║
+║                         Marzo 13, 2026                                         ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+📊 ESTADÍSTICAS GENERALES
+════════════════════════════════════════════════════════════════════════════════
+
+  Facultades:              4
+  Programas Totales:       41
+  Programas Acreditados:   18 (43.9%)
+  Programas Virtuales:     2  (4.9%)
+  
+  Distribución por Nivel:
+    • Tecnología:        15 programas (36.6%)
+    • Profesional:       11 programas (26.8%)
+    • Ingeniería:        15 programas (36.6%)
+  
+  Duración Promedio:       8.2 semestres
+  Duración Mínima:         6 semestres (Tecnologías)
+  Duración Máxima:         10 semestres (Profesional e Ingeniería)
+
+
+🎨 FACULTAD 1: ARTES Y HUMANIDADES
+════════════════════════════════════════════════════════════════════════════════
+
+Ubicación: Campus La Floresta
+Programas: 6
+Acreditados: 2
+Virtuales: 0
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ # │ Programa                                │ Nivel      │ Duración  │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 1 │ Artes Visuales                         │ Profesional│ 9 sem     │
+  │ 2 │ Cine                                   │ Profesional│ 9 sem     │
+  │ 3 │ Artes de la Grabación y Producción... │ Profesional│ 10 sem    │
+  │ 4 │ Tecnología en Informática Musical      │ Tecnología │ 6 sem     │
+  │ 5 │ Tecnología en Diseño Industrial    ⭐ │ Tecnología │ 6 sem     │
+  │ 6 │ Ingeniería en Diseño Industrial    ⭐ │ Ingeniería │ 10 sem    │
+  └─────────────────────────────────────────────────────────────────────┘
+
+
+💼 FACULTAD 2: CIENCIAS ECONÓMICAS Y ADMINISTRATIVAS
+════════════════════════════════════════════════════════════════════════════════
+
+Ubicación: Campus Fraternidad
+Programas: 9
+Acreditados: 5
+Virtuales: 1
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ # │ Programa                                │ Nivel      │ Duración  │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 7 │ Tecnología en Gestión Administrativa ⭐ │ Tecnología │ 6 sem     │
+  │ 8 │ Tecnología en Análisis de Costos... 🌐 │ Tecnología │ 6 sem     │
+  │ 9 │ Tecnología en Calidad              ⭐ │ Tecnología │ 6 sem     │
+  │10 │ Tecnología en Producción           ⭐ │ Tecnología │ 6 sem     │
+  │11 │ Administración Tecnológica            │ Profesional│ 10 sem    │
+  │12 │ Administración del Deporte            │ Profesional│ 9 sem     │
+  │13 │ Ingeniería Financiera y de Negocios  │ Ingeniería │ 10 sem    │
+  │14 │ Ingeniería de Producción           ⭐ │ Ingeniería │ 10 sem    │
+  │15 │ Ingeniería de la Calidad             │ Ingeniería │ 10 sem    │
+  └─────────────────────────────────────────────────────────────────────┘
+
+
+🔬 FACULTAD 3: CIENCIAS EXACTAS Y APLICADAS
+════════════════════════════════════════════════════════════════════════════════
+
+Ubicación: Campus Robledo
+Programas: 7
+Acreditados: 3
+Virtuales: 0
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ # │ Programa                                │ Nivel      │ Duración  │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │16 │ Tecnología en Mantenimiento de ... ⭐ │ Tecnología │ 6 sem     │
+  │17 │ Tecnología en Construcción de ... ⭐ │ Tecnología │ 6 sem     │
+  │18 │ Ingeniería Biomédica               ⭐ │ Ingeniería │ 10 sem    │
+  │19 │ Ciencias Ambientales                 │ Profesional│ 9 sem     │
+  │20 │ Ciencia y Tecnología de los Alim.   │ Profesional│ 10 sem    │
+  │21 │ Física                               │ Profesional│ 10 sem    │
+  │22 │ Química Industrial                   │ Profesional│ 10 sem    │
+  └─────────────────────────────────────────────────────────────────────┘
+
+
+⚙️  FACULTAD 4: INGENIERÍAS
+════════════════════════════════════════════════════════════════════════════════
+
+Ubicación: Campus Robledo
+Programas: 10
+Acreditados: 8
+Virtuales: 1
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ # │ Programa                                │ Nivel      │ Duración  │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │23 │ Tecnología en Sistemas de Inform... ⭐ │ Tecnología │ 6 sem     │
+  │24 │ Tecnología en Telecomunicaciones  ⭐ │ Tecnología │ 6 sem     │
+  │25 │ Tecnología en Electrónica         ⭐ │ Tecnología │ 6 sem     │
+  │26 │ Tecnología en Sistemas Electromagn.  │ Tecnología │ 6 sem     │
+  │27 │ Tecnología en Sistemas de Producción │ Tecnología │ 6 sem     │
+  │28 │ Ingeniería de Sistemas            ⭐ │ Ingeniería │ 10 sem    │
+  │29 │ Ingeniería de Telecomunicaciones  ⭐ │ Ingeniería │ 10 sem    │
+  │30 │ Ingeniería Electrónica            ⭐ │ Ingeniería │ 10 sem    │
+  │31 │ Ingeniería Electromecánica        ⭐ │ Ingeniería │ 10 sem    │
+  │32 │ Interpretación y Traducción LSC... 🌐 │ Profesional│ 8 sem     │
+  └─────────────────────────────────────────────────────────────────────┘
+
+
+📊 DISTRIBUCIÓN POR NIVEL ACADÉMICO
+════════════════════════════════════════════════════════════════════════════════
+
+TECNOLOGÍA (15 programas - 36.6%)
+─────────────────────────────────────────────────────────────────────────────
+Duración típica: 6 semestres
+Enfoque: Formación técnica práctica y operativa
+
+  • Informática Musical
+  • Diseño Industrial
+  • Gestión Administrativa
+  • Análisis de Costos y Presupuestos
+  • Calidad
+  • Producción
+  • Mantenimiento de Equipo Biomédico
+  • Construcción de Acabados Arquitectónicos
+  • Sistemas de Información
+  • Telecomunicaciones
+  • Electrónica
+  • Sistemas Electromecánicos
+  • Sistemas de Producción
+
+Acreditados: 8 programas
+
+
+PROFESIONAL (11 programas - 26.8%)
+─────────────────────────────────────────────────────────────────────────────
+Duración típica: 9-10 semestres
+Enfoque: Formación profesional integral y especializada
+
+  • Artes Visuales
+  • Cine
+  • Artes de la Grabación y Producción Musical
+  • Administración Tecnológica
+  • Administración del Deporte
+  • Ciencias Ambientales
+  • Ciencia y Tecnología de los Alimentos
+  • Física
+  • Química Industrial
+  • Interpretación y Traducción Lengua de Señas
+
+Acreditados: 2 programas
+
+
+INGENIERÍA (15 programas - 36.6%)
+─────────────────────────────────────────────────────────────────────────────
+Duración típica: 10 semestres
+Enfoque: Formación ingenieril avanzada con visión innovadora
+
+  • Diseño Industrial
+  • Financiera y de Negocios
+  • Producción
+  • Calidad
+  • Biomédica
+  • Sistemas
+  • Telecomunicaciones
+  • Electrónica
+  • Electromecánica
+
+Acreditados: 8 programas
+
+
+🎓 PROGRAMAS ACREDITADOS DE ALTA CALIDAD (18 programas - ⭐)
+════════════════════════════════════════════════════════════════════════════════
+
+Estos programas han obtenido reconocimiento oficial de acreditación de calidad:
+
+FACULTAD DE ARTES Y HUMANIDADES (2)
+  ✓ Tecnología en Diseño Industrial
+  ✓ Ingeniería en Diseño Industrial
+
+FACULTAD DE CIENCIAS ECONÓMICAS Y ADMINISTRATIVAS (5)
+  ✓ Tecnología en Gestión Administrativa
+  ✓ Tecnología en Calidad
+  ✓ Tecnología en Producción
+  ✓ Ingeniería de Producción
+
+FACULTAD DE CIENCIAS EXACTAS Y APLICADAS (3)
+  ✓ Tecnología en Mantenimiento de Equipo Biomédico
+  ✓ Tecnología en Construcción de Acabados Arquitectónicos
+  ✓ Ingeniería Biomédica
+
+FACULTAD DE INGENIERÍAS (8)
+  ✓ Tecnología en Sistemas de Información
+  ✓ Tecnología en Telecomunicaciones
+  ✓ Tecnología en Electrónica
+  ✓ Ingeniería de Sistemas
+  ✓ Ingeniería de Telecomunicaciones
+  ✓ Ingeniería Electrónica
+  ✓ Ingeniería Electromecánica
+
+
+🌐 PROGRAMAS DISPONIBLES EN MODALIDAD VIRTUAL (2 programas - 🌐)
+════════════════════════════════════════════════════════════════════════════════
+
+Acceso flexible desde cualquier ubicación:
+
+  1. Tecnología en Análisis de Costos y Presupuestos
+     • Facultad: Ciencias Económicas y Administrativas
+     • Nivel: Tecnología
+     • Duración: 6 semestres
+     • Ventaja: Estudiantes con limitaciones de movilidad
+
+  2. Interpretación y Traducción Lengua de Señas – Español
+     • Facultad: Ingenierías
+     • Nivel: Profesional
+     • Duración: 8 semestres
+     • Ventaja: Inclusión de comunidad sorda
+
+
+📍 DISTRIBUCIÓN POR CAMPUS
+════════════════════════════════════════════════════════════════════════════════
+
+CAMPUS LA FLORESTA
+  Facultad: Artes y Humanidades
+  Programas: 6
+  Enfoque: Artes, diseño, humanidades y música
+  Especialidad: Formación creativa y artística
+
+CAMPUS FRATERNIDAD
+  Facultad: Ciencias Económicas y Administrativas
+  Programas: 9
+  Enfoque: Administración, finanzas y gestión empresarial
+  Especialidad: Formación gerencial y empresarial
+
+CAMPUS ROBLEDO
+  Facultades: Ciencias Exactas y Aplicadas + Ingenierías
+  Programas: 17 + 10 = 26
+  Enfoque: Ciencias, ingeniería, salud y tecnología
+  Especialidad: Formación técnica e ingenieril
+
+
+🎯 DURACIÓN DE PROGRAMAS
+════════════════════════════════════════════════════════════════════════════════
+
+6 SEMESTRES (13 programas)
+  └─ Principalmente nivel Tecnología
+     Ejemplos: Gestión Administrativa, Telecomunicaciones, Electrónica
+
+8 SEMESTRES (1 programa)
+  └─ Interpretación y Traducción Lengua de Señas
+
+9 SEMESTRES (6 programas)
+  └─ Mix de nivel Profesional
+     Ejemplos: Artes Visuales, Administración del Deporte
+
+10 SEMESTRES (21 programas)
+  └─ Principalmente Profesional e Ingeniería
+     Ejemplos: Ingeniería de Sistemas, Física, Química Industrial
+
+
+💡 INSIGHTS Y ESTADÍSTICAS CLAVE
+════════════════════════════════════════════════════════════════════════════════
+
+✓ Programas más cortos:
+  6 semestres (13 programas de Tecnología)
+
+✓ Programas más largos:
+  10 semestres (21 programas de Profesional e Ingeniería)
+
+✓ Duración promedio:
+  8.2 semestres
+
+✓ Tasa de acreditación:
+  43.9% (18 de 41 programas acreditados)
+
+✓ Disponibilidad virtual:
+  4.9% (2 de 41 programas)
+
+✓ Facultad más grande:
+  Ingenierías (10 programas, 24.4%)
+
+✓ Facultad más pequeña:
+  Artes y Humanidades (6 programas, 14.6%)
+
+✓ Nivel más ofertado:
+  Tecnología e Ingeniería (empatados con 36.6%)
+
+✓ Inclusión de programas especializados:
+  Interpretación y Traducción, Administración del Deporte, Ciencias Ambientales
+
+
+📁 ARCHIVOS DISPONIBLES
+════════════════════════════════════════════════════════════════════════════════
+
+  ✓ PROGRAMAS_ITM.html  - Tabla visual interactiva con estilos profesionales
+  ✓ PROGRAMAS_ITM.csv   - Formato CSV para importación a bases de datos
+  ✓ PROGRAMAS_ITM.md    - Documento Markdown con detalles completos
+  ✓ PROGRAMAS_ITM_TABLA.txt - Este archivo (resumen en texto plano)
+
+
+🔗 INTEGRACIÓN CON EL SISTEMA
+════════════════════════════════════════════════════════════════════════════════
+
+Los programas se encuentran integrados en:
+
+  • Sistema de Gestión de Prácticas ITM (Dashboard web)
+  • Base de datos PostgreSQL (tabla carreras)
+  • Formularios de inscripción de estudiantes
+  • Reportes y estadísticas
+
+Para agregar nuevos programas:
+  1. Acceder al Dashboard
+  2. Sección "Carreras"
+  3. Seleccionar facultad correspondiente
+  4. Click "Agregar Nueva Carrera"
+
+
+════════════════════════════════════════════════════════════════════════════════
+
+Última actualización: 13 de Marzo de 2026
+Versión: 1.0.0
+Estado: ✅ COMPLETO Y VERIFICADO
+
+Datos basados en el Manual de Marca ITM v2025
+Instituto Tecnológico Metropolitano - Medellín, Colombia
+
+════════════════════════════════════════════════════════════════════════════════

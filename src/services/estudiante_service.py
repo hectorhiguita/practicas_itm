@@ -217,7 +217,19 @@ class EstudianteService:
             return None
         
         try:
-            estado_enum = EstadoPractica[nuevo_estado.upper()] if isinstance(nuevo_estado, str) else nuevo_estado
+            # Convertir el estado a enum
+            # Primero intentamos buscar por valor directo
+            estado_enum = None
+            if isinstance(nuevo_estado, str):
+                for estado in EstadoPractica:
+                    if estado.value == nuevo_estado:
+                        estado_enum = estado
+                        break
+                
+                if not estado_enum:
+                    raise ValueError(f"Estado inválido: {nuevo_estado}")
+            else:
+                estado_enum = nuevo_estado
         except (KeyError, AttributeError):
             raise ValueError(f"Estado inválido: {nuevo_estado}")
         

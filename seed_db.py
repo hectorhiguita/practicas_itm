@@ -80,10 +80,19 @@ def populate_database():
             }
         ]
         
+        # Obtener todas las facultades creadas
+        from src.models.base import Facultad, Carrera
+        facultades_db = db.query(Facultad).all()
+        facultades_map = {f.nombre: f for f in facultades_db}
+        
         carreras = {}
         for car_data in carreras_data:
             try:
-                fac = facultades[car_data['facultad']]
+                fac = facultades_map.get(car_data['facultad'])
+                if not fac:
+                    print(f"  ✗ Facultad '{car_data['facultad']}' no encontrada")
+                    continue
+                    
                 car = CarreraService.crear_carrera(
                     db,
                     car_data['nombre'],
@@ -94,6 +103,8 @@ def populate_database():
                 print(f"  ✓ Carrera '{car_data['nombre']}' creada")
             except ValueError as e:
                 print(f"  ℹ {car_data['nombre']}: {e}")
+            except Exception as e:
+                print(f"  ✗ Error: {str(e)}")
         
         # Crear estudiantes
         print("\n👨‍🎓 Creando estudiantes...")
@@ -158,7 +169,12 @@ def populate_database():
         estudiantes_creados = []
         for est_data in estudiantes_data:
             try:
-                car = carreras[est_data['carrera']]
+                # Obtener la carrera del diccionario
+                car = carreras.get(est_data['carrera'])
+                if not car:
+                    print(f"  ✗ Carrera '{est_data['carrera']}' no encontrada")
+                    continue
+                
                 est = EstudianteService.crear_estudiante(
                     db,
                     est_data['numero_documento'],
@@ -174,6 +190,8 @@ def populate_database():
                 print(f"  ✓ Estudiante '{est_data['nombre']} {est_data['apellido']}' creado")
             except ValueError as e:
                 print(f"  ℹ {est_data['nombre']}: {e}")
+            except Exception as e:
+                print(f"  ✗ Error creando {est_data['nombre']}: {str(e)}")
         
         # Actualizar algunos estados
         print("\n🔄 Actualizando estados de prácticas...")
