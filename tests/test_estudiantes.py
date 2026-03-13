@@ -35,7 +35,10 @@ def carrera_test(db, facultad_test):
     carrera = Carrera(
         nombre="Ingeniería de Sistemas",
         facultad_id=facultad_test.id,
-        descripcion="Carrera de Ingeniería de Sistemas"
+        descripcion="Carrera de Ingeniería de Sistemas",
+        nivel="Ingeniería",
+        duracion="10 semestres",
+        perfil_profesional="Desarrollo y gestión de sistemas de información"
     )
     db.add(carrera)
     db.commit()
