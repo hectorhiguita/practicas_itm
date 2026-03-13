@@ -157,7 +157,14 @@ jobs:
                 .containerDefinitions
                 | map(
                     if .name == env.ECS_CONTAINER_NAME
-                    then .image = env.IMAGE_URI
+                    then
+                      .image = env.IMAGE_URI
+                      | .portMappings = (
+                          if ((.portMappings // []) | map(select(.containerPort == 5000)) | length) == 0
+                          then (.portMappings // []) + [{"containerPort": 5000, "protocol": "tcp"}]
+                          else .portMappings
+                          end
+                        )
                     else .
                     end
                   )
