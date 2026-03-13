@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeEventListeners();
     loadDashboard();
     populateCarreraFilter();
+    populateFacultadFilter();
 });
 
 // Event Listeners
@@ -42,10 +43,12 @@ function initializeEventListeners() {
 
     // Search and filter listeners
     document.getElementById('search-estudiantes')?.addEventListener('input', debounce(filterEstudiantes, 300));
-    document.getElementById('search-carreras')?.addEventListener('input', debounce(filterCarreras, 300));
+    document.getElementById('search-programas')?.addEventListener('input', debounce(filterProgramas, 300));
     document.getElementById('search-facultades')?.addEventListener('input', debounce(filterFacultades, 300));
     document.getElementById('filter-estado')?.addEventListener('change', filterEstudiantes);
     document.getElementById('filter-carrera')?.addEventListener('change', filterEstudiantes);
+    document.getElementById('filter-nivel')?.addEventListener('change', filterProgramas);
+    document.getElementById('filter-facultad')?.addEventListener('change', filterProgramas);
 }
 
 // Section Management
@@ -64,18 +67,20 @@ function switchSection(section) {
     const titles = {
         'dashboard': 'Dashboard',
         'estudiantes': 'Gestión de Estudiantes',
-        'carreras': 'Gestión de Carreras',
+        'programas': 'Gestión de Programas Académicos',
         'facultades': 'Gestión de Facultades'
     };
     
     pageTitle.textContent = titles[section];
     addBtn.style.display = section === 'dashboard' ? 'none' : 'inline-flex';
+    const importBtn = document.getElementById('import-btn');
+    if (importBtn) importBtn.style.display = section === 'estudiantes' ? 'inline-flex' : 'none';
     
     // Load section data
     if (section === 'estudiantes') {
         loadEstudiantes();
-    } else if (section === 'carreras') {
-        loadCarreras();
+    } else if (section === 'programas') {
+        loadProgramas();
     } else if (section === 'facultades') {
         loadFacultades();
     }
@@ -89,10 +94,10 @@ async function loadDashboard() {
         const estudiantesData = await estudiantesRes.json();
         const estudiantes = estudiantesData.datos || [];
         
-        // Load carreras
-        const carrerasRes = await fetch(`${API_BASE}/carreras/`);
-        const carrerasData = await carrerasRes.json();
-        const carreras = carrerasData.datos || [];
+        // Load programas
+        const programasRes = await fetch(`${API_BASE}/programas/`);
+        const programasData = await programasRes.json();
+        const programas = programasData.data || [];
         
         // Load facultades
         const facultadesRes = await fetch(`${API_BASE}/facultades/`);
@@ -110,7 +115,7 @@ async function loadDashboard() {
         document.getElementById('disponibles').textContent = disponibles;
         document.getElementById('contratados').textContent = contratados;
         document.getElementById('finalizados').textContent = finalizados;
-        document.getElementById('total-carreras').textContent = carreras.length;
+        document.getElementById('total-programas').textContent = programas.length;
         document.getElementById('total-facultades').textContent = facultades.length;
         
         // Load recent estudiantes
@@ -203,17 +208,39 @@ function filterEstudiantes() {
 
 async function populateCarreraFilter() {
     try {
-        const res = await fetch(`${API_BASE}/carreras/`);
+        const res = await fetch(`${API_BASE}/facultades/`);
         const data = await res.json();
-        const carreras = data.datos || [];
+        const facultades = data.datos || [];
         
         const select = document.getElementById('filter-carrera');
         if (select) {
-            select.innerHTML = '<option value="">Todas las carreras</option>' + 
-                carreras.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+            select.innerHTML = '<option value="">Todas las facultades</option>' + 
+                facultades.map(f => `<option value="${f.id}">${f.nombre}</option>`).join('');
         }
     } catch (error) {
-        console.error('Error loading carreras for filter:', error);
+        console.error('Error loading facultades for filter:', error);
+    }
+}
+
+async function populateFacultadFilter() {
+    try {
+        const res = await fetch(`${API_BASE}/programas/`);
+        const data = await res.json();
+        const programas = data.data || [];
+        
+        // Get unique facultades from programas
+        const facultades = [...new Set(programas.map(p => ({
+            id: p.facultad_id,
+            nombre: p.facultad_nombre
+        })).map(f => JSON.stringify(f)))].map(JSON.parse);
+        
+        const select = document.getElementById('filter-facultad');
+        if (select) {
+            select.innerHTML = '<option value="">Todas las facultades</option>' + 
+                facultades.map(f => `<option value="${f.id}">${f.nombre}</option>`).join('');
+        }
+    } catch (error) {
+        console.error('Error loading facultades for filter:', error);
     }
 }
 
@@ -364,6 +391,72 @@ async function deleteEstudiante(id) {
     } catch (error) {
         console.error('Error deleting estudiante:', error);
         showToast('Error al eliminar estudiante', true);
+    }
+}
+
+// Programas Management
+async function loadProgramas() {
+    try {
+        const res = await fetch(`${API_BASE}/programas/`);
+        const data = await res.json();
+        currentData = data.data || [];
+        renderProgramas(currentData);
+        populateFacultadFilter();
+    } catch (error) {
+        console.error('Error loading programas:', error);
+        showToast('Error al cargar programas', true);
+    }
+}
+
+function renderProgramas(programas) {
+    const listContainer = document.getElementById('programas-list');
+    
+    if (programas.length === 0) {
+        listContainer.innerHTML = '<div class="empty-state"><p>No hay programas registrados</p></div>';
+        return;
+    }
+    
+    listContainer.innerHTML = programas.map(programa => `
+        <div class="list-item">
+            <div class="item-info">
+                <div class="item-title">${programa.nombre || ''}</div>
+                <div class="item-detail">
+                    <span class="badge">${programa.nivel || ''}</span>
+                    ${programa.duracion ? `<span class="badge" style="margin-left: 8px;">${programa.duracion}</span>` : ''}
+                    ${programa.acreditada ? '<span class="badge" style="margin-left: 8px; background: #4CAF50;">Acreditada</span>' : ''}
+                    ${programa.virtual ? '<span class="badge" style="margin-left: 8px; background: #2196F3;">Virtual</span>' : ''}
+                </div>
+                <div class="item-detail">Facultad: ${programa.facultad_nombre || 'Sin facultad'}</div>
+                ${programa.perfil_profesional ? `<div class="item-detail">Perfil: ${programa.perfil_profesional}</div>` : ''}
+            </div>
+            <div class="item-actions">
+                <button class="btn btn-info" onclick="viewPrograma(${programa.id})">Ver</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function filterProgramas() {
+    const search = (document.getElementById('search-programas')?.value || '').toLowerCase();
+    const nivel = document.getElementById('filter-nivel')?.value || '';
+    const facultad = document.getElementById('filter-facultad')?.value || '';
+
+    const filtered = currentData.filter(programa => {
+        const nombre = (programa.nombre || '').toLowerCase();
+        const perfil = (programa.perfil_profesional || '').toLowerCase();
+        const matchSearch = !search || nombre.includes(search) || perfil.includes(search);
+        const matchNivel = !nivel || programa.nivel === nivel;
+        const matchFacultad = !facultad || programa.facultad_id == facultad;
+        return matchSearch && matchNivel && matchFacultad;
+    });
+
+    renderProgramas(filtered);
+}
+
+function viewPrograma(id) {
+    const programa = currentData.find(p => p.id === id);
+    if (programa) {
+        alert(`${programa.nombre}\n\nNivel: ${programa.nivel}\nDuración: ${programa.duracion}\nFacultad: ${programa.facultad_nombre}\n\nPerfil: ${programa.perfil_profesional}`);
     }
 }
 
@@ -679,18 +772,21 @@ async function openAddEstudianteModal() {
 function updateCarrerasFilter() {
     const facultadId = document.getElementById('facultad_id').value;
     const carreraSelect = document.getElementById('carrera_id');
-    const options = carreraSelect.querySelectorAll('option');
-    
-    options.forEach(option => {
+    const currentValue = carreraSelect.value;
+
+    carreraSelect.querySelectorAll('option').forEach(option => {
         if (option.value === '') {
             option.style.display = 'block';
         } else {
-            const optionFacultadId = option.dataset.facultad;
-            option.style.display = optionFacultadId === facultadId ? 'block' : 'none';
+            option.style.display = option.dataset.facultad === facultadId ? 'block' : 'none';
         }
     });
-    
-    carreraSelect.value = '';
+
+    // Solo resetear si la carrera actual no pertenece a la facultad seleccionada
+    const selectedOption = carreraSelect.querySelector(`option[value="${currentValue}"]`);
+    if (!currentValue || !selectedOption || selectedOption.style.display === 'none') {
+        carreraSelect.value = '';
+    }
 }
 
 async function openAddCarreraModal() {
@@ -839,6 +935,164 @@ function showToast(message, isError = false) {
     
     setTimeout(() => toast.classList.remove('show'), 3000);
 }
+
+// ── Import CSV/Excel ──────────────────────────────────────────────────────────
+
+function openImportModal() {
+    resetImportModal();
+    document.getElementById('import-modal').classList.add('active');
+}
+
+function closeImportModal() {
+    document.getElementById('import-modal').classList.remove('active');
+    resetImportModal();
+}
+
+function resetImportModal() {
+    document.getElementById('import-step-upload').style.display = 'block';
+    document.getElementById('import-step-results').style.display = 'none';
+    document.getElementById('import-file').value = '';
+    document.getElementById('import-file-name').style.display = 'none';
+    document.getElementById('import-file-name').textContent = '';
+    document.getElementById('import-submit-btn').disabled = true;
+    document.getElementById('import-summary').innerHTML = '';
+    document.getElementById('import-errors').innerHTML = '';
+}
+
+(function initImportDropzone() {
+    document.addEventListener('DOMContentLoaded', () => {
+        const dropzone = document.getElementById('import-dropzone');
+        const fileInput = document.getElementById('import-file');
+        if (!dropzone || !fileInput) return;
+
+        dropzone.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', () => {
+            const file = fileInput.files[0];
+            if (file) {
+                const nameEl = document.getElementById('import-file-name');
+                nameEl.textContent = file.name;
+                nameEl.style.display = 'block';
+                document.getElementById('import-submit-btn').disabled = false;
+            }
+        });
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                fileInput.files = dt.files;
+                const nameEl = document.getElementById('import-file-name');
+                nameEl.textContent = file.name;
+                nameEl.style.display = 'block';
+                document.getElementById('import-submit-btn').disabled = false;
+            }
+        });
+
+        document.getElementById('import-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('import-modal')) closeImportModal();
+        });
+    });
+})();
+
+async function submitImport() {
+    const fileInput = document.getElementById('import-file');
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const submitBtn = document.getElementById('import-submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Importando...';
+
+    try {
+        const formData = new FormData();
+        formData.append('archivo', file);
+
+        const res = await fetch(`${API_BASE}/importar/estudiantes`, {
+            method: 'POST',
+            body: formData,
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            showToast(data.error || 'Error al importar', true);
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Importar';
+            return;
+        }
+
+        renderImportResults(data);
+        document.getElementById('import-step-upload').style.display = 'none';
+        document.getElementById('import-step-results').style.display = 'block';
+
+        if (data.exitosos > 0) {
+            loadEstudiantes();
+            loadDashboard();
+        }
+    } catch (error) {
+        console.error('Import error:', error);
+        showToast('Error al importar: ' + error.message, true);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Importar';
+    }
+}
+
+function renderImportResults(data) {
+    const summaryEl = document.getElementById('import-summary');
+    summaryEl.innerHTML = `
+        <div class="import-summary-cards">
+            <div class="summary-card summary-total">
+                <span class="summary-number">${data.total_filas}</span>
+                <span class="summary-label">Filas procesadas</span>
+            </div>
+            <div class="summary-card summary-success">
+                <span class="summary-number">${data.exitosos}</span>
+                <span class="summary-label">Importados</span>
+            </div>
+            <div class="summary-card summary-error">
+                <span class="summary-number">${data.con_errores}</span>
+                <span class="summary-label">Con errores</span>
+            </div>
+        </div>
+    `;
+
+    const errorsEl = document.getElementById('import-errors');
+    if (!data.errores || data.errores.length === 0) {
+        errorsEl.innerHTML = '<p class="import-success-msg">Todos los registros fueron importados correctamente.</p>';
+        return;
+    }
+
+    errorsEl.innerHTML = `
+        <h3 class="import-errors-title">Filas con errores (${data.errores.length})</h3>
+        <div class="import-errors-list">
+            ${data.errores.map(fila => `
+                <div class="import-error-row">
+                    <div class="import-error-row-header">Fila ${fila.fila}</div>
+                    <ul class="import-error-fields">
+                        ${fila.errores.map(e => `
+                            <li>
+                                <span class="error-field">${e.campo}</span>
+                                ${e.valor ? `<span class="error-value">"${e.valor}"</span>` : ''}
+                                <span class="error-msg">${e.mensaje}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 function debounce(func, delay) {
     let timeoutId;

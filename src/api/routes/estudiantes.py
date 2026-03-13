@@ -147,17 +147,23 @@ def actualizar_estudiante(estudiante_id):
             nombre=datos.get('nombre'),
             apellido=datos.get('apellido'),
             email=datos.get('email'),
-            telefono=datos.get('telefono')
+            telefono=datos.get('telefono'),
+            genero=datos.get('genero'),
+            facultad_id=datos.get('facultad_id'),
+            carrera_id=datos.get('carrera_id'),
+            estado_practica=datos.get('estado_practica'),
+            tiene_discapacidad=datos.get('tiene_discapacidad'),
+            discapacidad_personalizada=datos.get('discapacidad_personalizada'),
         )
-        
+
         if not estudiante_actualizado:
             db.close()
             return respuesta_error("Estudiante no encontrado", 404)
-        
+
         db.close()
-        return respuesta_exito(estudiante_actualizado.to_dict(), 
-                             "Estudiante actualizado exitosamente")
-    
+        return respuesta_exito(estudiante_actualizado.to_dict(),
+                               "Estudiante actualizado exitosamente")
+
     except ValueError as e:
         return respuesta_error(str(e), 400)
     except Exception as e:

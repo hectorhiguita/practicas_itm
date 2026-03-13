@@ -9,28 +9,44 @@ class CarreraService:
     """Servicio para gestionar carreras"""
     
     @staticmethod
-    def crear_carrera(db: Session, nombre: str, facultad_id: int, descripcion: str = None) -> Carrera:
+    def crear_carrera(db: Session, nombre: str, facultad_id: int, descripcion: str = None,
+                      nivel: str = 'Tecnología', duracion: str = None,
+                      perfil_profesional: str = None, acreditada: bool = False,
+                      virtual: bool = False) -> Carrera:
         """
         Crea una nueva carrera
-        
+
         Args:
             db: Sesión de base de datos
             nombre: Nombre de la carrera
             facultad_id: ID de la facultad a la que pertenece
             descripcion: Descripción opcional de la carrera
-            
+            nivel: Nivel académico (Tecnología, Profesional, Ingeniería)
+            duracion: Duración del programa
+            perfil_profesional: Perfil profesional del egresado
+            acreditada: Si el programa está acreditado
+            virtual: Si el programa es virtual
+
         Returns:
             Carrera: La carrera creada
-            
+
         Raises:
-            ValueError: Si la facultad no existe o la carrera ya existe
+            ValueError: Si la facultad no existe
         """
-        # Verificar que la facultad existe
         facultad = db.query(Facultad).filter(Facultad.id == facultad_id).first()
         if not facultad:
             raise ValueError(f"La facultad con ID {facultad_id} no existe")
-        
-        carrera = Carrera(nombre=nombre, facultad_id=facultad_id, descripcion=descripcion)
+
+        carrera = Carrera(
+            nombre=nombre,
+            facultad_id=facultad_id,
+            descripcion=descripcion,
+            nivel=nivel,
+            duracion=duracion,
+            perfil_profesional=perfil_profesional,
+            acreditada=1 if acreditada else 0,
+            virtual=1 if virtual else 0,
+        )
         db.add(carrera)
         db.commit()
         db.refresh(carrera)

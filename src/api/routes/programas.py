@@ -9,7 +9,7 @@ from src.services.programa_service import ProgramaService
 
 programas_bp = Blueprint('programas', __name__, url_prefix='/api/programas')
 
-@programas_bp.route('', methods=['GET'])
+@programas_bp.route('/', methods=['GET'])
 def obtener_programas():
     """
     Obtiene todos los programas académicos
@@ -178,7 +178,7 @@ def obtener_estadisticas():
     finally:
         db.close()
 
-@programas_bp.route('', methods=['POST'])
+@programas_bp.route('/', methods=['POST'])
 def crear_programa():
     """
     Crea un nuevo programa académico

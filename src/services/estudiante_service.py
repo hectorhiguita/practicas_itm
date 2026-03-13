@@ -240,32 +240,35 @@ class EstudianteService:
     
     @staticmethod
     def actualizar_estudiante(db: Session, estudiante_id: int, nombre: str = None,
-                             apellido: str = None, email: str = None, 
-                             telefono: str = None) -> Optional[Estudiante]:
+                             apellido: str = None, email: str = None,
+                             telefono: str = None, genero: str = None,
+                             facultad_id: int = None, carrera_id: int = None,
+                             estado_practica: str = None,
+                             tiene_discapacidad: str = None,
+                             discapacidad_personalizada: str = None) -> Optional[Estudiante]:
         """
         Actualiza datos de un estudiante
-        
+
         Args:
             db: Sesión de base de datos
             estudiante_id: ID del estudiante
-            nombre: Nuevo nombre (opcional)
-            apellido: Nuevo apellido (opcional)
-            email: Nuevo email (opcional)
-            telefono: Nuevo teléfono (opcional)
-            
+            nombre, apellido, email, telefono, genero: Datos personales (opcionales)
+            facultad_id, carrera_id: Asignación académica (opcionales)
+            estado_practica: Nuevo estado (opcional)
+            tiene_discapacidad, discapacidad_personalizada: Datos de discapacidad (opcionales)
+
         Returns:
             Estudiante actualizado o None si no existe
         """
         estudiante = EstudianteService.obtener_estudiante(db, estudiante_id)
         if not estudiante:
             return None
-        
+
         if nombre:
             estudiante.nombre = nombre
         if apellido:
             estudiante.apellido = apellido
         if email:
-            # Verificar que el email no esté en uso
             email_existente = db.query(Estudiante).filter(
                 Estudiante.email == email,
                 Estudiante.id != estudiante_id
@@ -275,7 +278,43 @@ class EstudianteService:
             estudiante.email = email
         if telefono:
             estudiante.telefono = telefono
-        
+
+        if genero:
+            try:
+                genero_enum = Genero[genero.upper()] if isinstance(genero, str) else genero
+            except (KeyError, AttributeError):
+                raise ValueError(f"Género inválido: {genero}")
+            estudiante.genero = genero_enum
+
+        if facultad_id:
+            facultad = db.query(Facultad).filter(Facultad.id == facultad_id).first()
+            if not facultad:
+                raise ValueError(f"La facultad con ID {facultad_id} no existe")
+            estudiante.facultad_id = facultad_id
+
+        if carrera_id:
+            carrera = db.query(Carrera).filter(Carrera.id == carrera_id).first()
+            if not carrera:
+                raise ValueError(f"La carrera con ID {carrera_id} no existe")
+            estudiante.carrera_id = carrera_id
+
+        if estado_practica:
+            estado_enum = None
+            for estado in EstadoPractica:
+                if estado.value == estado_practica:
+                    estado_enum = estado
+                    break
+            if not estado_enum:
+                raise ValueError(f"Estado inválido: {estado_practica}")
+            estudiante.estado_practica = estado_enum
+
+        # tiene_discapacidad puede ser cadena vacía (sin discapacidad), por eso se usa `is not None`
+        if tiene_discapacidad is not None:
+            estudiante.tiene_discapacidad = tiene_discapacidad or None
+
+        if discapacidad_personalizada is not None:
+            estudiante.discapacidad_personalizada = discapacidad_personalizada or None
+
         db.commit()
         db.refresh(estudiante)
         return estudiante

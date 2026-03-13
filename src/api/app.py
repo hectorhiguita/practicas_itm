@@ -5,6 +5,7 @@ from flask import Flask, jsonify, send_from_directory
 import os
 from src.config import get_config
 from src.api.routes import estudiantes, facultades, carreras, programas
+from src.api.routes.importar import importar_bp
 from src.database.connection import test_connection
 
 def create_app(config=None):
@@ -36,6 +37,7 @@ def create_app(config=None):
     app.register_blueprint(facultades.bp)
     app.register_blueprint(carreras.bp)
     app.register_blueprint(programas.programas_bp)
+    app.register_blueprint(importar_bp)
     
     # Ruta de prueba
     @app.route('/api/health', methods=['GET'])
@@ -56,18 +58,19 @@ def create_app(config=None):
             static_path = os.path.join(os.path.dirname(__file__), 'static', 'index.html')
             with open(static_path, 'r', encoding='utf-8') as f:
                 return f.read()
-        except FileNotFoundError:        return jsonify({
-            'nombre': 'Practicas ITM - API',
-            'version': '1.0.0',
-            'descripcion': 'Sistema de gestión de prácticas universitarias',
-            'endpoints': {
-                'health': '/api/health',
-                'estudiantes': '/api/estudiantes',
-                'facultades': '/api/facultades',
-                'carreras': '/api/carreras',
-                'programas': '/api/programas'
-            }
-        }), 200
+        except FileNotFoundError:
+            return jsonify({
+                'nombre': 'Practicas ITM - API',
+                'version': '1.0.0',
+                'descripcion': 'Sistema de gestión de prácticas universitarias',
+                'endpoints': {
+                    'health': '/api/health',
+                    'estudiantes': '/api/estudiantes',
+                    'facultades': '/api/facultades',
+                    'carreras': '/api/carreras',
+                    'programas': '/api/programas'
+                }
+            }), 200
     
     # Servir archivos estáticos
     @app.route('/static/<path:filename>')

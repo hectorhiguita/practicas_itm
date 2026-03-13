@@ -24,9 +24,9 @@
                     <span class="icon">👨‍🎓</span>
                     <span>Estudiantes</span>
                 </button>
-                <button class="menu-item" data-section="carreras">
-                    <span class="icon">📚</span>
-                    <span>Carreras</span>
+                <button class="menu-item" data-section="programas">
+                    <span class="icon">🎓</span>
+                    <span>Programas</span>
                 </button>
                 <button class="menu-item" data-section="facultades">
                     <span class="icon">🏫</span>
@@ -41,6 +41,9 @@
             <header class="header">
                 <h2 id="page-title">Dashboard</h2>
                 <div class="header-actions">
+                    <button class="btn btn-secondary" id="import-btn" style="display: none;" onclick="openImportModal()">
+                        &#8593; Importar CSV/Excel
+                    </button>
                     <button class="btn btn-primary" id="add-btn" style="display: none;">
                         + Agregar
                     </button>
@@ -76,8 +79,8 @@
                         <div class="stat-card">
                             <div class="stat-icon" style="background: #9C27B0;">📚</div>
                             <div class="stat-content">
-                                <h3>Total Carreras</h3>
-                                <p class="stat-number" id="total-carreras">0</p>
+                                <h3>Total Programas</h3>
+                                <p class="stat-number" id="total-programas">0</p>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -124,14 +127,25 @@
                     <div id="estudiantes-list" class="list"></div>
                 </section>
 
-                <!-- Carreras Section -->
-                <section id="carreras" class="section">
+                <!-- Programas Section -->
+                <section id="programas" class="section">
                     <div class="section-header">
                         <div class="search-bar">
-                            <input type="text" id="search-carreras" placeholder="Buscar carrera...">
+                            <input type="text" id="search-programas" placeholder="Buscar programa...">
+                        </div>
+                        <div class="filters">
+                            <select id="filter-nivel">
+                                <option value="">Todos los niveles</option>
+                                <option value="Tecnología">Tecnología</option>
+                                <option value="Profesional">Profesional</option>
+                                <option value="Ingeniería">Ingeniería</option>
+                            </select>
+                            <select id="filter-facultad">
+                                <option value="">Todas las facultades</option>
+                            </select>
                         </div>
                     </div>
-                    <div id="carreras-list" class="list"></div>
+                    <div id="programas-list" class="list"></div>
                 </section>
 
                 <!-- Facultades Section -->
@@ -159,6 +173,40 @@
                     <button type="submit" class="btn btn-primary">Guardar</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal de Importación CSV/Excel -->
+    <div id="import-modal" class="modal">
+        <div class="modal-content modal-import">
+            <span class="close" onclick="closeImportModal()">&times;</span>
+            <h2>Importar Estudiantes</h2>
+            <div id="import-step-upload">
+                <p class="import-help">Suba un archivo <strong>CSV</strong> o <strong>Excel (.xlsx)</strong> con los datos de los estudiantes.</p>
+                <div class="import-dropzone" id="import-dropzone">
+                    <div class="dropzone-icon">&#8593;</div>
+                    <p>Arrastra tu archivo aquí o haz clic para seleccionar</p>
+                    <p class="dropzone-hint">CSV o Excel (.xlsx) &mdash; máx. 5 MB</p>
+                    <input type="file" id="import-file" accept=".csv,.xlsx,.xls" style="display:none">
+                </div>
+                <div id="import-file-name" class="import-file-name" style="display:none"></div>
+                <div class="import-actions">
+                    <a href="/api/importar/estudiantes/plantilla" class="btn btn-secondary" download>
+                        &#8595; Descargar Plantilla
+                    </a>
+                    <button class="btn btn-primary" id="import-submit-btn" onclick="submitImport()" disabled>
+                        Importar
+                    </button>
+                </div>
+            </div>
+            <div id="import-step-results" style="display:none">
+                <div id="import-summary" class="import-summary"></div>
+                <div id="import-errors" class="import-errors"></div>
+                <div class="import-actions">
+                    <button class="btn btn-secondary" onclick="resetImportModal()">Importar otro archivo</button>
+                    <button class="btn btn-primary" onclick="closeImportModal()">Cerrar</button>
+                </div>
+            </div>
         </div>
     </div>
 
