@@ -92,12 +92,27 @@ class AsesorService:
         return asesor
 
     @staticmethod
-    def eliminar_asesor(db: Session, asesor_id: int) -> bool:
-        """Desactiva el asesor (no borra para preservar histórico)."""
+    def desactivar_asesor(db: Session, asesor_id: int) -> bool:
+        """Desactiva el asesor (soft delete, preserva histórico)."""
         asesor = AsesorService.obtener_asesor(db, asesor_id)
         if not asesor:
             return False
         asesor.activo = False
+        db.commit()
+        return True
+
+    @staticmethod
+    def eliminar_asesor(db: Session, asesor_id: int) -> bool:
+        """
+        Elimina permanentemente el asesor.
+        Desvincula primero a los estudiantes asignados para evitar FK violation.
+        """
+        asesor = AsesorService.obtener_asesor(db, asesor_id)
+        if not asesor:
+            return False
+        for est in list(asesor.estudiantes):
+            est.asesor_id = None
+        db.delete(asesor)
         db.commit()
         return True
 

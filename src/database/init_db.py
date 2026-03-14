@@ -161,17 +161,18 @@ def _ensure_asesores_table():
 
 
 def _add_column_if_missing(table: str, col_name: str, col_type: str):
-    """Agrega una columna a una tabla si no existe. Cada llamada usa su propia conexión."""
+    """
+    Agrega una columna a una tabla si no existe.
+    Usa ADD COLUMN IF NOT EXISTS (PostgreSQL 9.6+) para máxima fiabilidad.
+    Cada llamada abre su propia conexión para aislar errores.
+    """
     try:
         with engine.connect() as conn:
-            result = conn.execute(text(
-                "SELECT column_name FROM information_schema.columns "
-                "WHERE table_name=:tbl AND column_name=:col"
-            ), {"tbl": table, "col": col_name})
-            if not result.fetchone():
-                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_type}"))
-                conn.commit()
-                print(f"✓ Columna '{col_name}' agregada a {table}")
+            conn.execute(text(
+                f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {col_name} {col_type}"
+            ))
+            conn.commit()
+            print(f"✓ Columna '{col_name}' en {table} — OK")
     except Exception as e:
         print(f"⚠ No se pudo agregar '{col_name}' a {table}: {e}")
 

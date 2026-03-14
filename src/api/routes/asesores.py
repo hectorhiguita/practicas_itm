@@ -100,7 +100,9 @@ def eliminar_asesor(asesor_id):
         ok = AsesorService.eliminar_asesor(db, asesor_id)
         if not ok:
             return _err('Asesor no encontrado', 404)
-        return _ok(mensaje='Asesor desactivado')
+        return _ok(mensaje='Asesor eliminado')
+    except Exception as e:
+        return _err(f'Error al eliminar asesor: {str(e)}', 500)
     finally:
         db.close()
 
