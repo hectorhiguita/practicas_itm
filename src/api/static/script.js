@@ -78,14 +78,15 @@ function switchSection(section) {
         'dashboard': 'Dashboard',
         'estudiantes': 'Gestión de Estudiantes',
         'programas': 'Gestión de Programas Académicos',
-        'facultades': 'Gestión de Facultades'
+        'facultades': 'Gestión de Facultades',
+        'asesores': 'Asesores de Prácticas'
     };
-    
-    pageTitle.textContent = titles[section];
+
+    pageTitle.textContent = titles[section] || section;
     addBtn.style.display = section === 'dashboard' ? 'none' : 'inline-flex';
     const importBtn = document.getElementById('import-btn');
     if (importBtn) importBtn.style.display = section === 'estudiantes' ? 'inline-flex' : 'none';
-    
+
     // Load section data
     if (section === 'estudiantes') {
         loadEstudiantes();
@@ -93,6 +94,8 @@ function switchSection(section) {
         loadProgramas();
     } else if (section === 'facultades') {
         loadFacultades();
+    } else if (section === 'asesores') {
+        loadAsesores();
     }
 }
 
@@ -794,6 +797,8 @@ function openAddModal() {
         openAddCarreraModal();
     } else if (currentSection === 'facultades') {
         openAddFacultadModal();
+    } else if (currentSection === 'asesores') {
+        openAddAsesorModal();
     }
 }
 
@@ -1347,4 +1352,223 @@ function debounce(func, delay) {
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => func(...args), delay);
     };
+}
+
+// ── ASESORES ──────────────────────────────────────────────────────────────────
+
+const ESTADO_COLOR = {
+    'Disponible':    '#27AE60',
+    'En proceso':    '#2980B9',
+    'Contratado':    '#8E44AD',
+    'Por Finalizar': '#F39C12',
+    'Finalizado':    '#95A5A6',
+};
+
+let todosAsesores = [];
+
+async function loadAsesores() {
+    const container = document.getElementById('asesores-list');
+    container.innerHTML = '<p style="color:#999;padding:20px;">Cargando asesores...</p>';
+    try {
+        const res = await fetch(`${API_BASE}/asesores/`);
+        const data = await res.json();
+        todosAsesores = data.datos || [];
+        renderAsesores(todosAsesores);
+    } catch {
+        container.innerHTML = '<p style="color:red;padding:20px;">Error al cargar asesores.</p>';
+    }
+}
+
+function renderAsesores(lista) {
+    const container = document.getElementById('asesores-list');
+    if (!lista.length) {
+        container.innerHTML = '<p style="color:#999;padding:20px;">No hay asesores registrados.</p>';
+        return;
+    }
+    container.innerHTML = lista.map(a => {
+        const stats = a.estadisticas || {};
+        const activos = stats.total_activos ?? 0;
+        const historico = stats.total_historico ?? 0;
+        const porEstado = stats.por_estado || {};
+
+        const barras = Object.entries(porEstado).map(([estado, cnt]) => {
+            const color = ESTADO_COLOR[estado] || '#ccc';
+            const pct = historico ? Math.round(cnt / historico * 100) : 0;
+            return `<div class="asesor-barra-seg" style="width:${pct}%;background:${color};" title="${estado}: ${cnt}"></div>`;
+        }).join('');
+
+        const badges = Object.entries(porEstado).map(([estado, cnt]) => {
+            const color = ESTADO_COLOR[estado] || '#ccc';
+            return `<span class="asesor-badge" style="border-color:${color};color:${color};">${estado} <strong>${cnt}</strong></span>`;
+        }).join('');
+
+        const estadoLabel = a.activo
+            ? '<span class="asesor-activo">Activo</span>'
+            : '<span class="asesor-inactivo">Inactivo</span>';
+
+        return `
+        <div class="asesor-card" data-id="${a.id}">
+            <div class="asesor-card-header">
+                <div class="asesor-avatar">${a.nombre[0]}${a.apellido[0]}</div>
+                <div class="asesor-info">
+                    <h3>${a.nombre_completo}</h3>
+                    <span class="asesor-email">${a.email}</span>
+                    ${a.telefono ? `<span class="asesor-tel">${a.telefono}</span>` : ''}
+                </div>
+                <div class="asesor-card-actions">
+                    ${estadoLabel}
+                    <button class="btn-icon" onclick="editAsesor(${a.id})" title="Editar">✏️</button>
+                    <button class="btn-icon" onclick="toggleAsesor(${a.id}, ${a.activo})" title="${a.activo ? 'Desactivar' : 'Activar'}">
+                        ${a.activo ? '🔴' : '🟢'}
+                    </button>
+                </div>
+            </div>
+            <div class="asesor-stats">
+                <div class="asesor-stat">
+                    <span class="asesor-stat-num">${activos}</span>
+                    <span class="asesor-stat-label">Activos</span>
+                </div>
+                <div class="asesor-stat">
+                    <span class="asesor-stat-num">${historico}</span>
+                    <span class="asesor-stat-label">Histórico</span>
+                </div>
+            </div>
+            ${historico > 0 ? `
+            <div class="asesor-barra-bg">${barras}</div>
+            <div class="asesor-badges">${badges}</div>` : ''}
+            <button class="asesor-ver-btn" onclick="verEstudiantesAsesor(${a.id}, '${a.nombre_completo}')">
+                Ver estudiantes
+            </button>
+        </div>`;
+    }).join('');
+}
+
+document.getElementById('search-asesores')?.addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    renderAsesores(todosAsesores.filter(a =>
+        `${a.nombre} ${a.apellido} ${a.email}`.toLowerCase().includes(q)
+    ));
+});
+
+function openAddAsesorModal() {
+    editingId = null;
+    document.getElementById('modal-title').textContent = 'Nuevo Asesor';
+    document.getElementById('form-fields').innerHTML = `
+        <div class="form-group">
+            <label>Nombre *</label>
+            <input type="text" name="nombre" required>
+        </div>
+        <div class="form-group">
+            <label>Apellido *</label>
+            <input type="text" name="apellido" required>
+        </div>
+        <div class="form-group">
+            <label>Email *</label>
+            <input type="email" name="email" required>
+        </div>
+        <div class="form-group">
+            <label>Teléfono</label>
+            <input type="text" name="telefono">
+        </div>`;
+    document.getElementById('modal').style.display = 'flex';
+}
+
+async function editAsesor(id) {
+    editingId = id;
+    const res = await fetch(`${API_BASE}/asesores/${id}`);
+    const data = await res.json();
+    const a = data.datos;
+    document.getElementById('modal-title').textContent = 'Editar Asesor';
+    document.getElementById('form-fields').innerHTML = `
+        <div class="form-group">
+            <label>Nombre *</label>
+            <input type="text" name="nombre" value="${a.nombre}" required>
+        </div>
+        <div class="form-group">
+            <label>Apellido *</label>
+            <input type="text" name="apellido" value="${a.apellido}" required>
+        </div>
+        <div class="form-group">
+            <label>Email *</label>
+            <input type="email" name="email" value="${a.email}" required>
+        </div>
+        <div class="form-group">
+            <label>Teléfono</label>
+            <input type="text" name="telefono" value="${a.telefono || ''}">
+        </div>`;
+    document.getElementById('modal').style.display = 'flex';
+}
+
+async function toggleAsesor(id, activo) {
+    const res = await fetch(`${API_BASE}/asesores/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ activo: !activo }),
+    });
+    if (res.ok) {
+        showToast(activo ? 'Asesor desactivado' : 'Asesor activado');
+        loadAsesores();
+    } else {
+        showToast('Error al actualizar asesor', true);
+    }
+}
+
+async function verEstudiantesAsesor(id, nombre) {
+    const res = await fetch(`${API_BASE}/asesores/${id}/estudiantes`);
+    const data = await res.json();
+    const lista = data.datos || [];
+
+    const filas = lista.length
+        ? lista.map(e => `
+            <tr>
+                <td>${e.nombre} ${e.apellido}</td>
+                <td>${e.numero_documento}</td>
+                <td><span style="color:${ESTADO_COLOR[e.estado_practica]||'#666'}">${e.estado_practica}</span></td>
+                <td>${e.carrera_id ? (e.carrera_nombre || e.carrera_id) : '—'}</td>
+            </tr>`).join('')
+        : '<tr><td colspan="4" style="text-align:center;color:#999;">Sin estudiantes asignados</td></tr>';
+
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:700px;max-height:80vh;overflow-y:auto;">
+            <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
+            <h2>Estudiantes de ${nombre}</h2>
+            <table class="asesor-tabla-est">
+                <thead><tr><th>Nombre</th><th>Documento</th><th>Estado</th><th>Programa</th></tr></thead>
+                <tbody>${filas}</tbody>
+            </table>
+            <div style="margin-top:16px;text-align:right;">
+                <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cerrar</button>
+            </div>
+        </div>`;
+    document.body.appendChild(modal);
+}
+
+// Guardar asesor (crear o editar) — se engancha al submit del modal genérico
+const _origModalSubmit = window._asesorSubmitAttached;
+if (!_origModalSubmit) {
+    window._asesorSubmitAttached = true;
+    document.getElementById('modal-form').addEventListener('submit', async function(e) {
+        if (currentSection !== 'asesores') return;
+        e.preventDefault();
+        const fd = new FormData(this);
+        const body = Object.fromEntries(fd.entries());
+        const url = editingId ? `${API_BASE}/asesores/${editingId}` : `${API_BASE}/asesores/`;
+        const method = editingId ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showToast(editingId ? 'Asesor actualizado' : 'Asesor creado');
+            document.getElementById('modal').style.display = 'none';
+            loadAsesores();
+        } else {
+            showToast(data.error || 'Error al guardar asesor', true);
+        }
+    });
 }

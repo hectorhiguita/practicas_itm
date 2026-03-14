@@ -7,6 +7,7 @@ from src.config import get_config
 from src.api.routes import estudiantes, facultades, carreras, programas
 from src.api.routes.importar import importar_bp
 from src.api.routes.auth import auth_bp
+from src.api.routes.asesores import asesores_bp
 from src.api.auth.manager import login_manager
 from src.database.connection import test_connection
 from src.database.init_db import init_database
@@ -45,6 +46,7 @@ def create_app(config=None):
 
     # Registrar blueprints
     app.register_blueprint(auth_bp)
+    app.register_blueprint(asesores_bp)
     app.register_blueprint(estudiantes.bp)
     app.register_blueprint(facultades.bp)
     app.register_blueprint(carreras.bp)
