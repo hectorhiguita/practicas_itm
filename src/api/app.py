@@ -34,7 +34,6 @@ def create_app(config=None):
         app.config.from_object(get_config())
     
     # Inicializar BD solo si no está desactivado (en producción lo hace el entrypoint)
-    import os
     if not os.environ.get('SKIP_DB_INIT'):
         init_database()
 
