@@ -49,6 +49,7 @@ class ProductionConfig(Config):
 class TestingConfig(Config):
     """Configuración para testing"""
     TESTING = True
+    DISABLE_AUTH = True  # Desactiva el guard de autenticación en tests
     DB_NAME = 'practicas_itm_test'
     SQLALCHEMY_DATABASE_URI = f"postgresql://{Config.DB_USER}:{Config.DB_PASSWORD}@{Config.DB_HOST}:{Config.DB_PORT}/practicas_itm_test"
 

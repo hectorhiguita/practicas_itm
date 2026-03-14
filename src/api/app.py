@@ -56,6 +56,8 @@ def create_app(config=None):
 
     @app.before_request
     def require_login():
+        if app.config.get('DISABLE_AUTH'):
+            return
         if any(request.path.startswith(p) for p in _OPEN_PREFIXES):
             return
         if current_user.is_authenticated:
