@@ -202,8 +202,42 @@ jobs:
       - name: Wait for ECS service to stabilize
         run: |
           echo "Waiting for service '${{ vars.ECS_SERVICE_NAME }}' to stabilize..."
-          aws ecs wait services-stable \
-            --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
-            --services "${{ vars.ECS_SERVICE_NAME }}" \
-            --region "${{ vars.AWS_REGION }}"
-          echo "Deployment complete."
+          TIMEOUT=1200  # 20 minutes
+          INTERVAL=20
+          ELAPSED=0
+          NEW_TASK_DEF="${{ steps.register-task-def.outputs.new_task_def_arn }}"
+
+          while [ $ELAPSED -lt $TIMEOUT ]; do
+            STATUS=$(aws ecs describe-services \
+              --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
+              --services "${{ vars.ECS_SERVICE_NAME }}" \
+              --region "${{ vars.AWS_REGION }}" \
+              --query 'services[0]' \
+              --output json)
+
+            RUNNING=$(echo "$STATUS" | jq -r '.runningCount')
+            DESIRED=$(echo "$STATUS" | jq -r '.desiredCount')
+            PENDING=$(echo "$STATUS" | jq -r '.pendingCount')
+            DEPLOYMENTS=$(echo "$STATUS" | jq '[.deployments[] | select(.status == "PRIMARY")] | length')
+
+            echo "[${ELAPSED}s] running=${RUNNING} desired=${DESIRED} pending=${PENDING} active_deployments=${DEPLOYMENTS}"
+
+            # Stable when: 1 primary deployment, running == desired, no pending tasks
+            if [ "$DEPLOYMENTS" -eq 1 ] && [ "$RUNNING" -eq "$DESIRED" ] && [ "$PENDING" -eq 0 ] && [ "$DESIRED" -gt 0 ]; then
+              echo "Service is stable. Deployment complete."
+              exit 0
+            fi
+
+            # Detect failed tasks early
+            FAILED=$(echo "$STATUS" | jq -r '.deployments[] | select(.status == "PRIMARY") | .failedTasks')
+            if [ "$FAILED" -gt 2 ]; then
+              echo "ERROR: ${FAILED} tasks have failed. Deployment is unhealthy."
+              exit 1
+            fi
+
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done
+
+          echo "ERROR: Service did not stabilize within ${TIMEOUT} seconds."
+          exit 1
