@@ -59,8 +59,8 @@ def crear_asesor():
     if not datos.get('nombre') or not datos.get('apellido') or not datos.get('email'):
         return _err('nombre, apellido y email son requeridos')
     tipo = datos.get('tipo', 'asesor')
-    if tipo not in ('asesor', 'asesor_enlace'):
-        return _err('tipo debe ser "asesor" o "asesor_enlace"')
+    if tipo not in ('asesor', 'asesor_enlace', 'administrador'):
+        return _err('tipo debe ser "asesor", "asesor_enlace" o "administrador"')
     db = get_session()
     try:
         asesor, plain_pw = AsesorService.crear_asesor(db, datos)
@@ -99,7 +99,7 @@ def actualizar_asesor(asesor_id):
 
 @asesores_bp.route('/<int:asesor_id>', methods=['DELETE'])
 def eliminar_asesor(asesor_id):
-    if hasattr(current_user, 'role') and current_user.role in ('asesor', 'asesor_enlace'):
+    if hasattr(current_user, 'role') and current_user.role not in ('admin', 'administrador'):
         return _err('Sin permisos para eliminar asesores', 403)
     db = get_session()
     try:

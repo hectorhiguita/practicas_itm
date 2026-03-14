@@ -1546,7 +1546,7 @@ function renderAsesores(lista) {
             <div class="asesor-card-header">
                 <div class="asesor-avatar">${a.nombre[0]}${a.apellido[0]}</div>
                 <div class="asesor-info">
-                    <h3>${a.nombre_completo} ${a.tipo === 'asesor_enlace' ? '<span style="font-size:11px;background:#e8f4fd;color:#2980B9;padding:2px 7px;border-radius:10px;font-weight:600;">Enlace</span>' : ''}</h3>
+                    <h3>${a.nombre_completo} ${a.tipo === 'asesor_enlace' ? '<span style="font-size:11px;background:#e8f4fd;color:#2980B9;padding:2px 7px;border-radius:10px;font-weight:600;">Enlace</span>' : a.tipo === 'administrador' ? '<span style="font-size:11px;background:#fdf3e8;color:#e67e22;padding:2px 7px;border-radius:10px;font-weight:600;">Admin</span>' : ''}</h3>
                     <span class="asesor-email">${a.email}</span>
                     ${a.telefono ? `<span class="asesor-tel">${a.telefono}</span>` : ''}
                     ${a.tipo === 'asesor_enlace' && a.facultad_nombre ? `<span style="font-size:11px;color:#888;">Facultad: ${a.facultad_nombre}</span>` : ''}
@@ -1612,8 +1612,7 @@ async function openAddAsesorModal() {
         <div class="form-group">
             <label>Tipo *</label>
             <select name="tipo" id="asesor-tipo" onchange="toggleAsesorFacultad()">
-                <option value="asesor">Asesor</option>
-                <option value="asesor_enlace">Asesor Enlace</option>
+                ${_tipoOptions('asesor')}
             </select>
         </div>
         <div class="form-group" id="asesor-facultad-group" style="display:none;">
@@ -1623,6 +1622,7 @@ async function openAddAsesorModal() {
                 ${facultades.map(f => `<option value="${f.id}">${f.nombre}</option>`).join('')}
             </select>
         </div>`;
+    modalForm.onsubmit = (e) => _submitAsesorForm(e, null);
     document.getElementById('modal').style.display = 'flex';
 }
 
@@ -1655,8 +1655,7 @@ async function editAsesor(id) {
         <div class="form-group">
             <label>Tipo *</label>
             <select name="tipo" id="asesor-tipo" onchange="toggleAsesorFacultad()">
-                <option value="asesor" ${(a.tipo || 'asesor') === 'asesor' ? 'selected' : ''}>Asesor</option>
-                <option value="asesor_enlace" ${a.tipo === 'asesor_enlace' ? 'selected' : ''}>Asesor Enlace</option>
+                ${_tipoOptions(a.tipo || 'asesor')}
             </select>
         </div>
         <div class="form-group" id="asesor-facultad-group" style="display:${a.tipo === 'asesor_enlace' ? 'block' : 'none'};">
@@ -1666,6 +1665,7 @@ async function editAsesor(id) {
                 ${facultades.map(f => `<option value="${f.id}" ${f.id === a.facultad_id ? 'selected' : ''}>${f.nombre}</option>`).join('')}
             </select>
         </div>`;
+    modalForm.onsubmit = (e) => _submitAsesorForm(e, id);
     document.getElementById('modal').style.display = 'flex';
 }
 
@@ -1673,6 +1673,15 @@ function toggleAsesorFacultad() {
     const tipo = document.getElementById('asesor-tipo')?.value;
     const grupo = document.getElementById('asesor-facultad-group');
     if (grupo) grupo.style.display = tipo === 'asesor_enlace' ? 'block' : 'none';
+}
+
+function _tipoOptions(selected) {
+    const opts = [
+        ['asesor', 'Asesor'],
+        ['asesor_enlace', 'Asesor Enlace'],
+        ['administrador', 'Administrador'],
+    ];
+    return opts.map(([v, l]) => `<option value="${v}" ${selected === v ? 'selected' : ''}>${l}</option>`).join('');
 }
 
 async function toggleAsesor(id, activo) {
@@ -1753,37 +1762,31 @@ async function verEstudiantesAsesor(id, nombre) {
     document.body.appendChild(modal);
 }
 
-// Guardar asesor (crear o editar) — se engancha al submit del modal genérico
-const _origModalSubmit = window._asesorSubmitAttached;
-if (!_origModalSubmit) {
-    window._asesorSubmitAttached = true;
-    document.getElementById('modal-form').addEventListener('submit', async function(e) {
-        if (currentSection !== 'asesores') return;
-        e.preventDefault();
-        const fd = new FormData(this);
-        const body = Object.fromEntries(fd.entries());
-        if (body.facultad_id) body.facultad_id = parseInt(body.facultad_id);
-        else delete body.facultad_id;
-        const url = editingId ? `${API_BASE}/asesores/${editingId}` : `${API_BASE}/asesores/`;
-        const method = editingId ? 'PUT' : 'POST';
-        const res = await fetch(url, {
-            method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-        });
-        const data = await res.json();
-        if (res.ok) {
-            document.getElementById('modal').style.display = 'none';
-            loadAsesores();
-            if (!editingId && data.datos?.username) {
-                _showCredencialesModal(data.datos);
-            } else {
-                showToast('Asesor actualizado');
-            }
-        } else {
-            showToast(data.error || 'Error al guardar asesor', true);
-        }
+async function _submitAsesorForm(e, asesorId) {
+    e.preventDefault();
+    const fd = new FormData(modalForm);
+    const body = Object.fromEntries(fd.entries());
+    if (body.facultad_id) body.facultad_id = parseInt(body.facultad_id);
+    else delete body.facultad_id;
+    const url = asesorId ? `${API_BASE}/asesores/${asesorId}` : `${API_BASE}/asesores/`;
+    const method = asesorId ? 'PUT' : 'POST';
+    const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
     });
+    const data = await res.json();
+    if (res.ok) {
+        document.getElementById('modal').style.display = 'none';
+        loadAsesores();
+        if (!asesorId && data.datos?.username) {
+            _showCredencialesModal(data.datos);
+        } else {
+            showToast('Asesor actualizado');
+        }
+    } else {
+        showToast(data.error || 'Error al guardar asesor', true);
+    }
 }
 
 function _showCredencialesModal(asesor) {

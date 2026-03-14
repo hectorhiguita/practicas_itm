@@ -45,7 +45,9 @@ def listar_estudiantes():
         # Visibilidad según rol
         asesor_filter = None
         if hasattr(current_user, 'role'):
-            if current_user.role == 'asesor':
+            if current_user.role in ('admin', 'administrador'):
+                pass  # ve todos los estudiantes sin restricción
+            elif current_user.role == 'asesor':
                 # Solo sus estudiantes asignados
                 asesor_filter = current_user.asesor_id
             elif current_user.role == 'asesor_enlace':
@@ -237,7 +239,7 @@ def actualizar_estado_practica(estudiante_id):
 @bp.route('/<int:estudiante_id>', methods=['DELETE'])
 def eliminar_estudiante(estudiante_id):
     """Elimina un estudiante"""
-    if hasattr(current_user, 'role') and current_user.role in ('asesor', 'asesor_enlace'):
+    if hasattr(current_user, 'role') and current_user.role not in ('admin', 'administrador'):
         return respuesta_error("Sin permisos para eliminar estudiantes", 403)
     try:
         db = get_session()
