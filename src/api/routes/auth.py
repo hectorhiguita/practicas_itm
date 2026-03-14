@@ -1,13 +1,13 @@
 """
 Módulo de autenticación.
-Actualmente soporta login local (usuario/contraseña).
+Soporta login local (admin por config, asesores por BD).
 Preparado para agregar OAuth de Microsoft 365 / Azure AD en el futuro.
 """
 import hmac
-from flask import Blueprint, request, jsonify, redirect, url_for
+import os
+from flask import Blueprint, request, jsonify, redirect
 from flask_login import login_user, logout_user, current_user
 from werkzeug.security import check_password_hash
-import os
 
 from src.config import get_config
 from src.api.auth.manager import AppUser
@@ -15,16 +15,34 @@ from src.api.auth.manager import AppUser
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
-def _verify_local(username: str, password: str) -> bool:
-    """Verifica credenciales locales contra variables de entorno."""
+def _verify_local(username: str, password: str):
+    """
+    Verifica credenciales. Retorna AppUser si son válidas, None si no.
+    Orden de verificación: 1) admin (config/env), 2) asesores (BD).
+    """
     config = get_config()
-    user_match = hmac.compare_digest(username.lower(), config.ADMIN_USER.lower())
-    if not user_match:
-        return False
-    if not config.ADMIN_PASSWORD_HASH:
-        # Sin hash configurado → acceso bloqueado en producción
-        return False
-    return check_password_hash(config.ADMIN_PASSWORD_HASH, password)
+
+    # 1) Admin
+    if hmac.compare_digest(username.lower(), config.ADMIN_USER.lower()):
+        if config.ADMIN_PASSWORD_HASH and check_password_hash(config.ADMIN_PASSWORD_HASH, password):
+            return AppUser('admin', config.ADMIN_USER, role='admin')
+        return None  # usuario es admin pero contraseña incorrecta → no seguir
+
+    # 2) Asesor en BD
+    from src.database.connection import get_session
+    from src.models.base import Asesor
+    db = get_session()
+    try:
+        asesor = db.query(Asesor).filter(
+            Asesor.username == username.strip().lower(),
+            Asesor.activo == True,
+        ).first()
+        if asesor and asesor.password_hash and check_password_hash(asesor.password_hash, password):
+            return AppUser(f'asesor_{asesor.id}', asesor.username, role='asesor', asesor_id=asesor.id)
+    finally:
+        db.close()
+
+    return None
 
 
 # ── Punto de extensión OAuth ──────────────────────────────────────────────────
@@ -44,11 +62,6 @@ def _verify_local(username: str, password: str) -> bool:
 #         redirect_uri=url_for('auth.microsoft_callback', _external=True),
 #     )
 #     return redirect(auth_url)
-#
-# @auth_bp.route('/microsoft/callback')
-# def microsoft_callback():
-#     # Intercambiar código por token, obtener perfil del usuario, llamar login_user()
-#     ...
 # ─────────────────────────────────────────────────────────────────────────────
 
 
@@ -70,9 +83,10 @@ def login():
     if not username or not password:
         return jsonify({'error': 'Usuario y contraseña requeridos'}), 400
 
-    if _verify_local(username, password):
-        login_user(AppUser(username), remember=data.get('remember', False))
-        return jsonify({'ok': True}), 200
+    user = _verify_local(username, password)
+    if user:
+        login_user(user, remember=data.get('remember', False))
+        return jsonify({'ok': True, 'role': user.role}), 200
 
     return jsonify({'error': 'Credenciales incorrectas'}), 401
 

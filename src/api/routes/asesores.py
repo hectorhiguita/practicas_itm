@@ -4,6 +4,7 @@ Rutas de la API para gestionar Asesores de Prácticas
 from flask import Blueprint, request, jsonify
 from src.database.connection import get_session
 from src.services.asesor_service import AsesorService
+from src.services.email_service import send_credentials_email
 
 asesores_bp = Blueprint('asesores', __name__, url_prefix='/api/asesores')
 
@@ -58,8 +59,18 @@ def crear_asesor():
         return _err('nombre, apellido y email son requeridos')
     db = get_session()
     try:
-        asesor = AsesorService.crear_asesor(db, datos)
-        return _ok(asesor.to_dict(), 'Asesor creado exitosamente', 201)
+        asesor, plain_pw = AsesorService.crear_asesor(db, datos)
+        # Enviar credenciales por correo (no bloqueante ante fallo de email)
+        email_ok = send_credentials_email(
+            to_email=asesor.email,
+            nombre=f"{asesor.nombre} {asesor.apellido}",
+            username=asesor.username,
+            password=plain_pw,
+        )
+        respuesta = asesor.to_dict()
+        respuesta['username'] = asesor.username
+        respuesta['email_enviado'] = email_ok
+        return _ok(respuesta, 'Asesor creado exitosamente', 201)
     except Exception as e:
         return _err(f'Error al crear asesor: {str(e)}', 500)
     finally:

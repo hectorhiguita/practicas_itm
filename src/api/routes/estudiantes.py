@@ -3,6 +3,7 @@ Rutas de la API para gestionar estudiantes
 """
 from datetime import datetime
 from flask import Blueprint, request, jsonify, send_file
+from flask_login import current_user
 from src.database.connection import get_session
 from src.services.estudiante_service import EstudianteService
 from src.services.cv_service import CVService
@@ -40,15 +41,20 @@ def listar_estudiantes():
         facultad_id = request.args.get('facultad_id', type=int)
         carrera_id = request.args.get('carrera_id', type=int)
         estado = request.args.get('estado', type=str)
-        
+
+        # Asesores solo ven sus propios estudiantes
+        asesor_filter = None
+        if hasattr(current_user, 'role') and current_user.role == 'asesor':
+            asesor_filter = current_user.asesor_id
+
         if facultad_id:
-            estudiantes = EstudianteService.obtener_estudiantes_por_facultad(db, facultad_id)
+            estudiantes = EstudianteService.obtener_estudiantes_por_facultad(db, facultad_id, asesor_id=asesor_filter)
         elif carrera_id:
-            estudiantes = EstudianteService.obtener_estudiantes_por_carrera(db, carrera_id)
+            estudiantes = EstudianteService.obtener_estudiantes_por_carrera(db, carrera_id, asesor_id=asesor_filter)
         elif estado:
-            estudiantes = EstudianteService.obtener_estudiantes_por_estado(db, estado)
+            estudiantes = EstudianteService.obtener_estudiantes_por_estado(db, estado, asesor_id=asesor_filter)
         else:
-            estudiantes = EstudianteService.obtener_todos_estudiantes(db)
+            estudiantes = EstudianteService.obtener_todos_estudiantes(db, asesor_id=asesor_filter)
         
         db.close()
         datos = [e.to_dict() for e in estudiantes]

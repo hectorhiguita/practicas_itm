@@ -160,6 +160,29 @@ def _ensure_asesores_table():
         print(f"Advertencia al crear tabla asesores: {e}")
 
 
+def _migrate_asesor_auth_columns():
+    """Agrega username y password_hash a asesores si no existen (migración idempotente)."""
+    asesor_columns = [
+        ("username", "VARCHAR(100)"),
+        ("password_hash", "VARCHAR(255)"),
+    ]
+    try:
+        with engine.connect() as conn:
+            for col_name, col_type in asesor_columns:
+                result = conn.execute(text(
+                    "SELECT column_name FROM information_schema.columns "
+                    "WHERE table_name='asesores' AND column_name=:col"
+                ), {"col": col_name})
+                if not result.fetchone():
+                    conn.execute(text(
+                        f"ALTER TABLE asesores ADD COLUMN {col_name} {col_type}"
+                    ))
+                    conn.commit()
+                    print(f"✓ Columna '{col_name}' agregada a asesores")
+    except Exception as e:
+        print(f"Advertencia en migración columnas asesores: {e}")
+
+
 def _migrate_cv_columns():
     """Agrega columnas de CV y asesor a estudiantes si no existen (migración idempotente)."""
     estudiante_columns = [
@@ -199,8 +222,9 @@ def init_database():
         Base.metadata.create_all(bind=engine)
         print("✓ Tablas creadas exitosamente")
 
-        # Migración: asegurar tabla asesores y columnas de CV/asesor en estudiantes
+        # Migraciones idempotentes
         _ensure_asesores_table()
+        _migrate_asesor_auth_columns()
         _migrate_cv_columns()
 
         from sqlalchemy.orm import sessionmaker
