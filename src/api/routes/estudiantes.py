@@ -2,7 +2,7 @@
 Rutas de la API para gestionar estudiantes
 """
 from datetime import datetime
-from flask import Blueprint, request, jsonify, redirect
+from flask import Blueprint, request, jsonify, send_file
 from src.database.connection import get_session
 from src.services.estudiante_service import EstudianteService
 from src.services.cv_service import CVService
@@ -361,7 +361,7 @@ def subir_cv(estudiante_id):
 
 @bp.route('/<int:estudiante_id>/cv', methods=['GET'])
 def ver_cv(estudiante_id):
-    """Redirige a la URL prefirmada del CV para visualizarlo en el navegador."""
+    """Sirve el PDF del CV directamente desde EFS."""
     try:
         db = get_session()
         estudiante = EstudianteService.obtener_estudiante(db, estudiante_id)
@@ -372,11 +372,13 @@ def ver_cv(estudiante_id):
         if not estudiante.cv_s3_key:
             return respuesta_error("El estudiante no tiene CV registrado", 404)
 
-        url = CVService.get_presigned_url(estudiante.cv_s3_key)
-        return redirect(url)
+        abs_path = CVService.get_file_path(estudiante.cv_s3_key)
+        return send_file(abs_path, mimetype='application/pdf',
+                         download_name=estudiante.cv_filename or 'cv.pdf',
+                         as_attachment=False)
 
-    except ValueError as e:
-        return respuesta_error(str(e), 503)
+    except FileNotFoundError as e:
+        return respuesta_error(str(e), 404)
     except Exception as e:
         return respuesta_error(f"Error al obtener CV: {str(e)}", 500)
 

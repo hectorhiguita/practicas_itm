@@ -1,25 +1,10 @@
 """
-Servicio para gestión de CVs en S3
+Servicio para gestión de CVs en EFS
 """
 import os
-import boto3
-from botocore.exceptions import ClientError
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from src.config import get_config
-
-
-def _get_s3_client():
-    config = get_config()
-    return boto3.client('s3', region_name=config.S3_REGION)
-
-
-def _get_bucket():
-    config = get_config()
-    bucket = config.S3_CV_BUCKET
-    if not bucket:
-        raise ValueError("S3_CV_BUCKET no está configurado")
-    return bucket
 
 
 class CVService:
@@ -27,7 +12,7 @@ class CVService:
     @staticmethod
     def upload_cv(estudiante_id: int, file_bytes: bytes, original_filename: str) -> str:
         """
-        Sube el CV a S3 y retorna el s3_key.
+        Guarda el CV en EFS y retorna la ruta relativa.
         Reemplaza el CV anterior si existe.
         """
         config = get_config()
@@ -40,38 +25,32 @@ class CVService:
             raise ValueError("Solo se permiten archivos PDF")
 
         timestamp = datetime.utcnow().strftime('%Y%m%d%H%M%S')
-        s3_key = f"cvs/{estudiante_id}/{timestamp}_{safe_name}"
+        relative_path = os.path.join(str(estudiante_id), f"{timestamp}_{safe_name}")
+        abs_path = os.path.join(config.EFS_CV_PATH, relative_path)
 
-        bucket = _get_bucket()
-        s3 = _get_s3_client()
-        s3.put_object(
-            Bucket=bucket,
-            Key=s3_key,
-            Body=file_bytes,
-            ContentType='application/pdf',
-            ContentDisposition=f'inline; filename="{safe_name}"',
-        )
-        return s3_key
+        os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+        with open(abs_path, 'wb') as f:
+            f.write(file_bytes)
+
+        return relative_path
 
     @staticmethod
-    def get_presigned_url(s3_key: str, expiration: int = 3600) -> str:
-        """Genera una URL prefirmada para descargar/visualizar el CV."""
-        bucket = _get_bucket()
-        s3 = _get_s3_client()
-        url = s3.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': bucket, 'Key': s3_key},
-            ExpiresIn=expiration,
-        )
-        return url
+    def get_file_path(relative_path: str) -> str:
+        """Retorna la ruta absoluta del CV en EFS."""
+        config = get_config()
+        abs_path = os.path.join(config.EFS_CV_PATH, relative_path)
+        if not os.path.exists(abs_path):
+            raise FileNotFoundError("Archivo CV no encontrado en EFS")
+        return abs_path
 
     @staticmethod
-    def delete_cv(s3_key: str) -> bool:
-        """Elimina el CV de S3."""
+    def delete_cv(relative_path: str) -> bool:
+        """Elimina el CV del EFS."""
         try:
-            bucket = _get_bucket()
-            s3 = _get_s3_client()
-            s3.delete_object(Bucket=bucket, Key=s3_key)
+            config = get_config()
+            abs_path = os.path.join(config.EFS_CV_PATH, relative_path)
+            if os.path.exists(abs_path):
+                os.remove(abs_path)
             return True
-        except ClientError:
+        except OSError:
             return False
