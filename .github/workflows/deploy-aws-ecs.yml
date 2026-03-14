@@ -190,54 +190,73 @@ jobs:
           echo "New task definition ARN: ${NEW_TASK_DEF_ARN}"
           echo "new_task_def_arn=${NEW_TASK_DEF_ARN}" >> "$GITHUB_OUTPUT"
 
-      - name: Update ECS service
+      - name: Update ECS services
         run: |
-          aws ecs update-service \
-            --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
-            --service "${{ vars.ECS_SERVICE_NAME }}" \
-            --task-definition "${{ steps.register-task-def.outputs.new_task_def_arn }}" \
-            --region "${{ vars.AWS_REGION }}"
-          echo "ECS service updated."
+          # Build list of services to update: always ECS_SERVICE_NAME, plus ECS_SERVICE_NAME_2 if set
+          SERVICES=("${{ vars.ECS_SERVICE_NAME }}")
+          if [ -n "${{ vars.ECS_SERVICE_NAME_2 }}" ]; then
+            SERVICES+=("${{ vars.ECS_SERVICE_NAME_2 }}")
+          fi
 
-      - name: Wait for ECS service to stabilize
-        run: |
-          echo "Waiting for service '${{ vars.ECS_SERVICE_NAME }}' to stabilize..."
-          TIMEOUT=1200  # 20 minutes
-          INTERVAL=20
-          ELAPSED=0
-          NEW_TASK_DEF="${{ steps.register-task-def.outputs.new_task_def_arn }}"
-
-          while [ $ELAPSED -lt $TIMEOUT ]; do
-            STATUS=$(aws ecs describe-services \
+          for SVC in "${SERVICES[@]}"; do
+            echo "Updating service: ${SVC}"
+            aws ecs update-service \
               --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
-              --services "${{ vars.ECS_SERVICE_NAME }}" \
-              --region "${{ vars.AWS_REGION }}" \
-              --query 'services[0]' \
-              --output json)
-
-            RUNNING=$(echo "$STATUS" | jq -r '.runningCount')
-            DESIRED=$(echo "$STATUS" | jq -r '.desiredCount')
-            PENDING=$(echo "$STATUS" | jq -r '.pendingCount')
-            DEPLOYMENTS=$(echo "$STATUS" | jq '[.deployments[] | select(.status == "PRIMARY")] | length')
-
-            echo "[${ELAPSED}s] running=${RUNNING} desired=${DESIRED} pending=${PENDING} active_deployments=${DEPLOYMENTS}"
-
-            # Stable when: 1 primary deployment, running == desired, no pending tasks
-            if [ "$DEPLOYMENTS" -eq 1 ] && [ "$RUNNING" -eq "$DESIRED" ] && [ "$PENDING" -eq 0 ] && [ "$DESIRED" -gt 0 ]; then
-              echo "Service is stable. Deployment complete."
-              exit 0
-            fi
-
-            # Detect failed tasks early
-            FAILED=$(echo "$STATUS" | jq -r '.deployments[] | select(.status == "PRIMARY") | .failedTasks')
-            if [ "$FAILED" -gt 2 ]; then
-              echo "ERROR: ${FAILED} tasks have failed. Deployment is unhealthy."
-              exit 1
-            fi
-
-            sleep $INTERVAL
-            ELAPSED=$((ELAPSED + INTERVAL))
+              --service "${SVC}" \
+              --task-definition "${{ steps.register-task-def.outputs.new_task_def_arn }}" \
+              --force-new-deployment \
+              --region "${{ vars.AWS_REGION }}"
+            echo "Service ${SVC} updated."
           done
 
-          echo "ERROR: Service did not stabilize within ${TIMEOUT} seconds."
-          exit 1
+      - name: Wait for ECS services to stabilize
+        run: |
+          SERVICES=("${{ vars.ECS_SERVICE_NAME }}")
+          if [ -n "${{ vars.ECS_SERVICE_NAME_2 }}" ]; then
+            SERVICES+=("${{ vars.ECS_SERVICE_NAME_2 }}")
+          fi
+
+          TIMEOUT=1200  # 20 minutes
+          INTERVAL=20
+
+          for SVC in "${SERVICES[@]}"; do
+            echo "Waiting for service '${SVC}' to stabilize..."
+            ELAPSED=0
+
+            while [ $ELAPSED -lt $TIMEOUT ]; do
+              STATUS=$(aws ecs describe-services \
+                --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
+                --services "${SVC}" \
+                --region "${{ vars.AWS_REGION }}" \
+                --query 'services[0]' \
+                --output json)
+
+              RUNNING=$(echo "$STATUS" | jq -r '.runningCount')
+              DESIRED=$(echo "$STATUS" | jq -r '.desiredCount')
+              PENDING=$(echo "$STATUS" | jq -r '.pendingCount')
+              DEPLOYMENTS=$(echo "$STATUS" | jq '[.deployments[] | select(.status == "PRIMARY")] | length')
+
+              echo "[${SVC}][${ELAPSED}s] running=${RUNNING} desired=${DESIRED} pending=${PENDING} active_deployments=${DEPLOYMENTS}"
+
+              if [ "$DEPLOYMENTS" -eq 1 ] && [ "$RUNNING" -eq "$DESIRED" ] && [ "$PENDING" -eq 0 ] && [ "$DESIRED" -gt 0 ]; then
+                echo "Service ${SVC} is stable."
+                break
+              fi
+
+              FAILED=$(echo "$STATUS" | jq -r '.deployments[] | select(.status == "PRIMARY") | .failedTasks')
+              if [ "$FAILED" -gt 2 ]; then
+                echo "ERROR: ${FAILED} tasks have failed in ${SVC}. Deployment is unhealthy."
+                exit 1
+              fi
+
+              sleep $INTERVAL
+              ELAPSED=$((ELAPSED + INTERVAL))
+            done
+
+            if [ $ELAPSED -ge $TIMEOUT ]; then
+              echo "ERROR: Service ${SVC} did not stabilize within ${TIMEOUT} seconds."
+              exit 1
+            fi
+          done
+
+          echo "All services stable. Deployment complete."
