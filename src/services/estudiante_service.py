@@ -197,7 +197,7 @@ class EstudianteService:
         return EstudianteService.obtener_estudiantes_por_estado(db, "disponible")
     
     @staticmethod
-    def actualizar_estado_practica(db: Session, estudiante_id: int, nuevo_estado: str, fecha_inicio_contrato: str = None) -> Optional[Estudiante]:
+    def actualizar_estado_practica(db: Session, estudiante_id: int, nuevo_estado: str, fecha_inicio_contrato: str = None, fecha_fin_contrato: str = None) -> Optional[Estudiante]:
         """
         Actualiza el estado de práctica de un estudiante
         
@@ -234,12 +234,53 @@ class EstudianteService:
             raise ValueError(f"Estado inválido: {nuevo_estado}")
         
         estudiante.estado_practica = estado_enum
-        if estado_enum.value == 'Contratado' and fecha_inicio_contrato:
+        if estado_enum.value == 'Contratado':
             from datetime import datetime as dt
-            estudiante.fecha_inicio_contrato = dt.fromisoformat(fecha_inicio_contrato)
+            import calendar
+            if fecha_inicio_contrato:
+                inicio = dt.fromisoformat(fecha_inicio_contrato)
+                estudiante.fecha_inicio_contrato = inicio
+            else:
+                from datetime import timezone
+                inicio = estudiante.fecha_inicio_contrato or dt.now(timezone.utc).replace(tzinfo=None)
+
+            if fecha_fin_contrato:
+                estudiante.fecha_fin_contrato = dt.fromisoformat(fecha_fin_contrato)
+            elif not estudiante.fecha_fin_contrato:
+                # Por defecto 6 meses desde el inicio
+                m = inicio.month - 1 + 6
+                year = inicio.year + m // 12
+                month = m % 12 + 1
+                day = min(inicio.day, calendar.monthrange(year, month)[1])
+                estudiante.fecha_fin_contrato = inicio.replace(year=year, month=month, day=day)
         db.commit()
         db.refresh(estudiante)
         return estudiante
+
+    @staticmethod
+    def actualizar_estados_por_vencimiento(db: Session) -> int:
+        """
+        Cambia a 'Por Finalizar' a todos los estudiantes 'Contratado' cuyo
+        fecha_fin_contrato es en 30 días o menos.
+        Retorna la cantidad de estudiantes actualizados.
+        """
+        from datetime import datetime as dt, timedelta, timezone
+        ahora = dt.now(timezone.utc).replace(tzinfo=None)
+        limite = ahora + timedelta(days=30)
+
+        estudiantes = db.query(Estudiante).filter(
+            Estudiante.estado_practica == EstadoPractica.CONTRATADO,
+            Estudiante.fecha_fin_contrato != None,
+            Estudiante.fecha_fin_contrato <= limite
+        ).all()
+
+        for est in estudiantes:
+            est.estado_practica = EstadoPractica.POR_FINALIZAR
+
+        if estudiantes:
+            db.commit()
+
+        return len(estudiantes)
 
     @staticmethod
     def actualizar_estudiante(db: Session, estudiante_id: int, nombre: str = None,
@@ -249,7 +290,8 @@ class EstudianteService:
                              estado_practica: str = None,
                              tiene_discapacidad: str = None,
                              discapacidad_personalizada: str = None,
-                             fecha_inicio_contrato: str = None) -> Optional[Estudiante]:
+                             fecha_inicio_contrato: str = None,
+                             fecha_fin_contrato: str = None) -> Optional[Estudiante]:
         """
         Actualiza datos de un estudiante
 
@@ -322,6 +364,10 @@ class EstudianteService:
         if fecha_inicio_contrato:
             from datetime import datetime as dt
             estudiante.fecha_inicio_contrato = dt.fromisoformat(fecha_inicio_contrato)
+
+        if fecha_fin_contrato:
+            from datetime import datetime as dt
+            estudiante.fecha_fin_contrato = dt.fromisoformat(fecha_fin_contrato)
 
         db.commit()
         db.refresh(estudiante)

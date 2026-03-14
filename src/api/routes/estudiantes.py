@@ -157,6 +157,7 @@ def actualizar_estudiante(estudiante_id):
             tiene_discapacidad=datos.get('tiene_discapacidad'),
             discapacidad_personalizada=datos.get('discapacidad_personalizada'),
             fecha_inicio_contrato=datos.get('fecha_inicio_contrato'),
+            fecha_fin_contrato=datos.get('fecha_fin_contrato'),
         )
 
         if not estudiante_actualizado:
@@ -190,7 +191,8 @@ def actualizar_estado_practica(estudiante_id):
             db=db,
             estudiante_id=estudiante_id,
             nuevo_estado=datos['estado'],
-            fecha_inicio_contrato=datos.get('fecha_inicio_contrato')
+            fecha_inicio_contrato=datos.get('fecha_inicio_contrato'),
+            fecha_fin_contrato=datos.get('fecha_fin_contrato'),
         )
         
         if not estudiante_actualizado:
@@ -221,6 +223,22 @@ def eliminar_estudiante(estudiante_id):
     
     except Exception as e:
         return respuesta_error(f"Error al eliminar estudiante: {str(e)}", 500)
+
+# Revisión automática de estados por vencimiento
+@bp.route('/revisar-estados', methods=['POST'])
+def revisar_estados():
+    """Cambia a 'Por Finalizar' los estudiantes cuyo contrato vence en ≤30 días."""
+    try:
+        db = get_session()
+        actualizados = EstudianteService.actualizar_estados_por_vencimiento(db)
+        db.close()
+        return respuesta_exito(
+            {'actualizados': actualizados},
+            f"{actualizados} estudiante(s) actualizados a 'Por Finalizar'"
+        )
+    except Exception as e:
+        return respuesta_error(f"Error al revisar estados: {str(e)}", 500)
+
 
 # Búsquedas especializadas
 @bp.route('/documento/<numero_documento>', methods=['GET'])

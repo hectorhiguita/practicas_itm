@@ -1051,3 +1051,45 @@ body {
     gap: 10px;
     margin-top: 20px;
 }
+
+/* ── Semáforo de contrato ─────────────────────────────────────────────────── */
+.semaforo-contrato {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: #f5f6fa;
+    border-radius: 8px;
+}
+
+.semaforo-dot {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.semaforo-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.semaforo-barra-bg {
+    height: 5px;
+    background: #e0e0e0;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.semaforo-barra-fg {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+
+.semaforo-label {
+    font-size: 11px;
+    font-weight: 600;
+}

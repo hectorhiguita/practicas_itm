@@ -34,8 +34,8 @@ USER appuser
 EXPOSE 5000
 
 # Healthcheck apuntando al endpoint existente
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health')" || exit 1
 
-# Gunicorn: 2 workers, timeout generoso para cold start de RDS
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "60", "--access-logfile", "-", "src.api.app:app"]
+# Gunicorn: 2 workers, preload app once in master to avoid N parallel DB inits on cold start
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "--preload", "--access-logfile", "-", "src.api.app:app"]
