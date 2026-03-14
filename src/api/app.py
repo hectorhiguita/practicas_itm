@@ -69,6 +69,24 @@ def create_app(config=None):
             return jsonify({'error': 'No autenticado', 'redirect': '/auth/login'}), 401
         return redirect('/auth/login')
     
+    @app.route('/api/debug/columns')
+    def debug_columns():
+        """Diagnóstico: muestra columnas actuales de estudiantes y asesores."""
+        from sqlalchemy import text as _text
+        from src.database.connection import get_session as _gs
+        db = _gs()
+        try:
+            rows = db.execute(_text(
+                "SELECT table_name, column_name FROM information_schema.columns "
+                "WHERE table_name IN ('estudiantes','asesores') ORDER BY table_name, column_name"
+            )).fetchall()
+            result = {}
+            for tbl, col in rows:
+                result.setdefault(tbl, []).append(col)
+            return jsonify(result)
+        finally:
+            db.close()
+
     # Ruta de prueba
     @app.route('/api/health', methods=['GET'])
     def health_check():

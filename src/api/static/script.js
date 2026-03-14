@@ -1663,11 +1663,54 @@ if (!_origModalSubmit) {
         });
         const data = await res.json();
         if (res.ok) {
-            showToast(editingId ? 'Asesor actualizado' : 'Asesor creado');
             document.getElementById('modal').style.display = 'none';
             loadAsesores();
+            if (!editingId && data.datos?.username) {
+                _showCredencialesModal(data.datos);
+            } else {
+                showToast('Asesor actualizado');
+            }
         } else {
             showToast(data.error || 'Error al guardar asesor', true);
         }
     });
+}
+
+function _showCredencialesModal(asesor) {
+    const emailBadge = asesor.email_enviado
+        ? `<span style="color:#27AE60;font-weight:600;">✓ Correo enviado a ${asesor.email}</span>`
+        : `<span style="color:#E74C3C;font-weight:600;">✗ No se pudo enviar el correo — guarda estos datos manualmente</span>`;
+
+    const m = document.createElement('div');
+    m.className = 'modal';
+    m.style.cssText = 'display:flex;z-index:2000;';
+    m.innerHTML = `
+        <div class="modal-content" style="max-width:480px;">
+            <h2 style="margin-bottom:4px;">Asesor creado</h2>
+            <p style="color:#666;font-size:13px;margin-bottom:16px;">${emailBadge}</p>
+
+            <div style="background:#f4f6fa;border:1px solid #dde3ef;border-radius:8px;padding:16px 20px;margin-bottom:16px;">
+                <div style="margin-bottom:12px;">
+                    <span style="font-size:12px;color:#888;display:block;margin-bottom:2px;">USUARIO</span>
+                    <span id="_cred_user" style="font-family:monospace;font-size:17px;font-weight:700;color:#1B1464;">${asesor.username}</span>
+                    <button onclick="navigator.clipboard.writeText('${asesor.username}')" title="Copiar"
+                        style="margin-left:8px;background:none;border:none;cursor:pointer;color:#56ACDE;font-size:13px;">📋</button>
+                </div>
+                <div>
+                    <span style="font-size:12px;color:#888;display:block;margin-bottom:2px;">CONTRASEÑA TEMPORAL</span>
+                    <span id="_cred_pw" style="font-family:monospace;font-size:17px;font-weight:700;color:#1B1464;">${asesor.password_temporal}</span>
+                    <button onclick="navigator.clipboard.writeText('${asesor.password_temporal}')" title="Copiar"
+                        style="margin-left:8px;background:none;border:none;cursor:pointer;color:#56ACDE;font-size:13px;">📋</button>
+                </div>
+            </div>
+
+            <p style="font-size:12px;color:#999;margin-bottom:20px;">
+                Esta contraseña no se volverá a mostrar. El asesor puede iniciar sesión de inmediato con estas credenciales.
+            </p>
+            <div style="text-align:right;">
+                <button class="btn btn-primary" onclick="this.closest('.modal').remove()">Entendido</button>
+            </div>
+        </div>`;
+    document.body.appendChild(m);
+    m.addEventListener('click', e => { if (e.target === m) m.remove(); });
 }
