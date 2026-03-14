@@ -26,16 +26,18 @@ COPY --from=builder /install /usr/local
 COPY src/ ./src/
 COPY main.py .
 COPY seed_db_itm.py .
+COPY entrypoint.sh .
 
 # Usuario no-root para seguridad
 RUN adduser --disabled-password --gecos '' appuser && chown -R appuser /app
+RUN chmod +x entrypoint.sh
 USER appuser
 
 EXPOSE 5000
 
 # Healthcheck apuntando al endpoint existente
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=5 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/api/health')" || exit 1
 
-# Gunicorn: 2 workers, preload app once in master to avoid N parallel DB inits on cold start
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "--preload", "--access-logfile", "-", "src.api.app:app"]
+# Entrypoint: inicializa BD (una vez) y luego arranca gunicorn sin --preload
+CMD ["./entrypoint.sh"]
