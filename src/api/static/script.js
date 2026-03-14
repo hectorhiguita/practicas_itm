@@ -299,17 +299,27 @@ function calcularSemaforo(est) {
 
 // Estudiantes Management
 async function loadEstudiantes() {
-    try {
-        // Actualizar automáticamente estados por vencimiento de contrato
-        await fetch(`${API_BASE}/estudiantes/revisar-estados`, { method: 'POST' }).catch(() => {});
+    // Actualizar automáticamente estados por vencimiento de contrato
+    await fetch(`${API_BASE}/estudiantes/revisar-estados`, { method: 'POST' }).catch(() => {});
 
+    try {
         const res = await fetch(`${API_BASE}/estudiantes/`);
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            console.error('Error API estudiantes:', err);
+            showToast(`Error al cargar estudiantes: ${err.error || res.status}`, true);
+            currentData = [];
+            renderEstudiantes([]);
+            return;
+        }
         const data = await res.json();
         currentData = data.datos || [];
         renderEstudiantes(currentData);
     } catch (error) {
         console.error('Error loading estudiantes:', error);
         showToast('Error al cargar estudiantes', true);
+        currentData = [];
+        renderEstudiantes([]);
     }
 }
 
@@ -329,7 +339,7 @@ function renderEstudiantes(estudiantes) {
                 <div class="item-detail">Email: ${est.email}</div>
                 <div class="item-detail">Teléfono: ${est.telefono}</div>
                 <div>
-                    <span class="item-badge badge-${est.estado_practica.toLowerCase().replace(' ', '-')}">${est.estado_practica}</span>
+                    <span class="item-badge badge-${(est.estado_practica||'desconocido').toLowerCase().replace(' ', '-')}">${est.estado_practica||'Desconocido'}</span>
                 </div>
                 ${calcularSemaforo(est)}
             </div>
@@ -1520,6 +1530,7 @@ function renderAsesores(lista) {
                     <button class="btn-icon" onclick="toggleAsesor(${a.id}, ${a.activo})" title="${a.activo ? 'Desactivar' : 'Activar'}">
                         ${a.activo ? '🔴' : '🟢'}
                     </button>
+                    <button class="btn-icon" onclick="eliminarAsesor(${a.id}, '${a.nombre_completo.replace(/'/g, '&#39;')}')" title="Eliminar permanentemente">🗑️</button>
                 </div>
             </div>
             <div class="asesor-stats">
@@ -1610,6 +1621,37 @@ async function toggleAsesor(id, activo) {
     } else {
         showToast('Error al actualizar asesor', true);
     }
+}
+
+async function eliminarAsesor(id, nombre) {
+    const m = document.createElement('div');
+    m.className = 'modal';
+    m.style.cssText = 'display:flex;z-index:2000;';
+    m.innerHTML = `
+        <div class="modal-content" style="max-width:420px;">
+            <h2>Eliminar asesor</h2>
+            <p style="margin:12px 0 20px;">¿Estás seguro de que deseas eliminar a <strong>${nombre}</strong>?
+               Esta acción desvincula al asesor del sistema. Los estudiantes asignados quedarán sin asesor.</p>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button class="btn btn-secondary" id="_del_cancel">Cancelar</button>
+                <button class="btn btn-danger"    id="_del_confirm">Eliminar</button>
+            </div>
+        </div>`;
+    document.body.appendChild(m);
+    m.querySelector('#_del_cancel').addEventListener('click', () => m.remove());
+    m.addEventListener('click', e => { if (e.target === m) m.remove(); });
+    m.querySelector('#_del_confirm').addEventListener('click', async () => {
+        m.remove();
+        const res = await fetch(`${API_BASE}/asesores/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            showToast('Asesor eliminado');
+            loadAsesores();
+            loadDashboard();
+        } else {
+            const d = await res.json().catch(() => ({}));
+            showToast(d.error || 'Error al eliminar asesor', true);
+        }
+    });
 }
 
 async function verEstudiantesAsesor(id, nombre) {
