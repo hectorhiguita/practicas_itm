@@ -89,7 +89,7 @@ class EstudianteService:
         Returns:
             Estudiante o None si no existe
         """
-        return db.query(Estudiante).filter(Estudiante.id == estudiante_id).first()
+        return db.query(Estudiante).options(joinedload(Estudiante.asesor)).filter(Estudiante.id == estudiante_id).first()
     
     @staticmethod
     def obtener_estudiante_por_documento(db: Session, numero_documento: str) -> Optional[Estudiante]:
