@@ -8,7 +8,6 @@ from src.utils.enums import EstadoPractica
 
 ESTADO_ACTIVO = {
     EstadoPractica.DISPONIBLE,
-    EstadoPractica.EN_PROCESO,
     EstadoPractica.CONTRATADO,
     EstadoPractica.POR_FINALIZAR,
 }
