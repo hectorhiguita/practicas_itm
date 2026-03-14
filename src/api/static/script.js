@@ -25,9 +25,17 @@ const pageTitle = document.getElementById('page-title');
 let currentSection = 'dashboard';
 let currentData = null;
 let editingId = null;
+let currentUser = { role: 'anonymous' };
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const res = await _origFetch('/auth/me');
+        const data = await res.json();
+        currentUser = data;
+    } catch (e) {
+        console.error('Error loading user info:', e);
+    }
     initializeEventListeners();
     loadDashboard();
     populateCarreraFilter();
@@ -338,6 +346,7 @@ function renderEstudiantes(estudiantes) {
                 <div class="item-detail">Documento: ${est.numero_documento}</div>
                 <div class="item-detail">Email: ${est.email}</div>
                 <div class="item-detail">Teléfono: ${est.telefono}</div>
+                ${est.asesor_nombre ? `<div class="item-detail">Asesor: ${est.asesor_nombre}</div>` : ''}
                 <div>
                     <span class="item-badge badge-${(est.estado_practica||'desconocido').toLowerCase().replace(' ', '-')}">${est.estado_practica||'Desconocido'}</span>
                 </div>
@@ -345,7 +354,7 @@ function renderEstudiantes(estudiantes) {
             </div>
             <div class="item-actions">
                 <button class="btn btn-edit" onclick="editEstudiante(${est.id})">Editar</button>
-                <button class="btn btn-danger" onclick="deleteEstudiante(${est.id})">Eliminar</button>
+                ${!['asesor','asesor_enlace'].includes(currentUser.role) ? `<button class="btn btn-danger" onclick="deleteEstudiante(${est.id})">Eliminar</button>` : ''}
                 ${est.estado_practica === 'Disponible' ? `
                     <button class="btn btn-primary" onclick="abrirModalContrato(${est.id}, '${est.nombre} ${est.apellido}')">Contratar</button>
                 ` : ''}
@@ -494,15 +503,16 @@ async function changeEstudianteStatus(id, newStatus, fechaInicio = null, fechaFi
 async function editEstudiante(id) {
     const estudiante = currentData.find(e => e.id === id);
     if (!estudiante) return;
-    
+
     try {
-        const facultadesRes = await fetch(`${API_BASE}/facultades/`);
-        const facultadesData = await facultadesRes.json();
+        const [facultadesData, carrerasData, asesoresData] = await Promise.all([
+            fetch(`${API_BASE}/facultades/`).then(r => r.json()),
+            fetch(`${API_BASE}/carreras/`).then(r => r.json()),
+            fetch(`${API_BASE}/asesores/?activos=true`).then(r => r.json()),
+        ]);
         const facultades = facultadesData.datos || [];
-        
-        const carrerasRes = await fetch(`${API_BASE}/carreras/`);
-        const carrerasData = await carrerasRes.json();
         const carreras = carrerasData.datos || [];
+        const asesores = (asesoresData.datos || []).filter(a => a.activo);
         
         editingId = id;
         document.getElementById('modal-title').textContent = 'Editar Estudiante';
@@ -589,6 +599,13 @@ async function editEstudiante(id) {
                 <label for="fecha_fin_contrato" style="margin-top:8px;display:block;">Fecha de fin del contrato</label>
                 <input type="date" id="fecha_fin_contrato" name="fecha_fin_contrato"
                     value="${estudiante.fecha_fin_contrato ? estudiante.fecha_fin_contrato.substring(0, 10) : ''}">
+            </div>
+            <div class="form-group">
+                <label for="asesor_id">Asesor asignado</label>
+                <select id="asesor_id" name="asesor_id">
+                    <option value="">Sin asesor</option>
+                    ${asesores.map(a => `<option value="${a.id}" ${a.id === estudiante.asesor_id ? 'selected' : ''}>${a.nombre_completo}${a.tipo === 'asesor_enlace' ? ' (Enlace)' : ''}</option>`).join('')}
+                </select>
             </div>
         `;
 
@@ -913,13 +930,14 @@ function openAddModal() {
 
 async function openAddEstudianteModal() {
     try {
-        const facultadesRes = await fetch(`${API_BASE}/facultades/`);
-        const facultadesData = await facultadesRes.json();
+        const [facultadesData, carrerasData, asesoresData] = await Promise.all([
+            fetch(`${API_BASE}/facultades/`).then(r => r.json()),
+            fetch(`${API_BASE}/carreras/`).then(r => r.json()),
+            fetch(`${API_BASE}/asesores/?activos=true`).then(r => r.json()),
+        ]);
         const facultades = facultadesData.datos || [];
-        
-        const carrerasRes = await fetch(`${API_BASE}/carreras/`);
-        const carrerasData = await carrerasRes.json();
         const carreras = carrerasData.datos || [];
+        const asesores = (asesoresData.datos || []).filter(a => a.activo);
         
         editingId = null;
         document.getElementById('modal-title').textContent = 'Agregar Nuevo Estudiante';
@@ -991,8 +1009,15 @@ async function openAddEstudianteModal() {
                 <label for="discapacidad_personalizada">Especificar discapacidad</label>
                 <input type="text" id="discapacidad_personalizada" name="discapacidad_personalizada" placeholder="Ej: Discapacidad específica...">
             </div>
+            <div class="form-group">
+                <label for="asesor_id">Asesor asignado</label>
+                <select id="asesor_id" name="asesor_id">
+                    <option value="">Sin asesor</option>
+                    ${asesores.map(a => `<option value="${a.id}">${a.nombre_completo}${a.tipo === 'asesor_enlace' ? ' (Enlace)' : ''}</option>`).join('')}
+                </select>
+            </div>
         `;
-        
+
         modalForm.onsubmit = (e) => {
             e.preventDefault();
             submitForm('estudiantes', null);
@@ -1096,6 +1121,7 @@ async function submitForm(type, id = null) {
     // Convert numeric fields
     if (data.facultad_id) data.facultad_id = parseInt(data.facultad_id);
     if (data.carrera_id) data.carrera_id = parseInt(data.carrera_id);
+    if (data.asesor_id) data.asesor_id = parseInt(data.asesor_id); else delete data.asesor_id;
     
     // Validar que la carrera pertenece a la facultad seleccionada
     if (data.facultad_id && data.carrera_id) {
@@ -1520,9 +1546,10 @@ function renderAsesores(lista) {
             <div class="asesor-card-header">
                 <div class="asesor-avatar">${a.nombre[0]}${a.apellido[0]}</div>
                 <div class="asesor-info">
-                    <h3>${a.nombre_completo}</h3>
+                    <h3>${a.nombre_completo} ${a.tipo === 'asesor_enlace' ? '<span style="font-size:11px;background:#e8f4fd;color:#2980B9;padding:2px 7px;border-radius:10px;font-weight:600;">Enlace</span>' : ''}</h3>
                     <span class="asesor-email">${a.email}</span>
                     ${a.telefono ? `<span class="asesor-tel">${a.telefono}</span>` : ''}
+                    ${a.tipo === 'asesor_enlace' && a.facultad_nombre ? `<span style="font-size:11px;color:#888;">Facultad: ${a.facultad_nombre}</span>` : ''}
                 </div>
                 <div class="asesor-card-actions">
                     ${estadoLabel}
@@ -1530,7 +1557,7 @@ function renderAsesores(lista) {
                     <button class="btn-icon" onclick="toggleAsesor(${a.id}, ${a.activo})" title="${a.activo ? 'Desactivar' : 'Activar'}">
                         ${a.activo ? '🔴' : '🟢'}
                     </button>
-                    <button class="btn-icon" onclick="eliminarAsesor(${a.id}, '${a.nombre_completo.replace(/'/g, '&#39;')}')" title="Eliminar permanentemente">🗑️</button>
+                    ${!['asesor','asesor_enlace'].includes(currentUser.role) ? `<button class="btn-icon" onclick="eliminarAsesor(${a.id}, '${a.nombre_completo.replace(/'/g, '&#39;')}')" title="Eliminar permanentemente">🗑️</button>` : ''}
                 </div>
             </div>
             <div class="asesor-stats">
@@ -1560,8 +1587,10 @@ document.getElementById('search-asesores')?.addEventListener('input', function()
     ));
 });
 
-function openAddAsesorModal() {
+async function openAddAsesorModal() {
     editingId = null;
+    const facultadesData = await fetch(`${API_BASE}/facultades/`).then(r => r.json()).catch(() => ({}));
+    const facultades = facultadesData.datos || [];
     document.getElementById('modal-title').textContent = 'Nuevo Asesor';
     document.getElementById('form-fields').innerHTML = `
         <div class="form-group">
@@ -1579,15 +1608,32 @@ function openAddAsesorModal() {
         <div class="form-group">
             <label>Teléfono</label>
             <input type="text" name="telefono">
+        </div>
+        <div class="form-group">
+            <label>Tipo *</label>
+            <select name="tipo" id="asesor-tipo" onchange="toggleAsesorFacultad()">
+                <option value="asesor">Asesor</option>
+                <option value="asesor_enlace">Asesor Enlace</option>
+            </select>
+        </div>
+        <div class="form-group" id="asesor-facultad-group" style="display:none;">
+            <label>Facultad (requerida para Asesor Enlace)</label>
+            <select name="facultad_id">
+                <option value="">Seleccionar facultad...</option>
+                ${facultades.map(f => `<option value="${f.id}">${f.nombre}</option>`).join('')}
+            </select>
         </div>`;
     document.getElementById('modal').style.display = 'flex';
 }
 
 async function editAsesor(id) {
     editingId = id;
-    const res = await fetch(`${API_BASE}/asesores/${id}`);
-    const data = await res.json();
-    const a = data.datos;
+    const [asesorData, facultadesData] = await Promise.all([
+        fetch(`${API_BASE}/asesores/${id}`).then(r => r.json()),
+        fetch(`${API_BASE}/facultades/`).then(r => r.json()).catch(() => ({})),
+    ]);
+    const a = asesorData.datos;
+    const facultades = facultadesData.datos || [];
     document.getElementById('modal-title').textContent = 'Editar Asesor';
     document.getElementById('form-fields').innerHTML = `
         <div class="form-group">
@@ -1605,8 +1651,28 @@ async function editAsesor(id) {
         <div class="form-group">
             <label>Teléfono</label>
             <input type="text" name="telefono" value="${a.telefono || ''}">
+        </div>
+        <div class="form-group">
+            <label>Tipo *</label>
+            <select name="tipo" id="asesor-tipo" onchange="toggleAsesorFacultad()">
+                <option value="asesor" ${(a.tipo || 'asesor') === 'asesor' ? 'selected' : ''}>Asesor</option>
+                <option value="asesor_enlace" ${a.tipo === 'asesor_enlace' ? 'selected' : ''}>Asesor Enlace</option>
+            </select>
+        </div>
+        <div class="form-group" id="asesor-facultad-group" style="display:${a.tipo === 'asesor_enlace' ? 'block' : 'none'};">
+            <label>Facultad (requerida para Asesor Enlace)</label>
+            <select name="facultad_id">
+                <option value="">Seleccionar facultad...</option>
+                ${facultades.map(f => `<option value="${f.id}" ${f.id === a.facultad_id ? 'selected' : ''}>${f.nombre}</option>`).join('')}
+            </select>
         </div>`;
     document.getElementById('modal').style.display = 'flex';
+}
+
+function toggleAsesorFacultad() {
+    const tipo = document.getElementById('asesor-tipo')?.value;
+    const grupo = document.getElementById('asesor-facultad-group');
+    if (grupo) grupo.style.display = tipo === 'asesor_enlace' ? 'block' : 'none';
 }
 
 async function toggleAsesor(id, activo) {
@@ -1696,6 +1762,8 @@ if (!_origModalSubmit) {
         e.preventDefault();
         const fd = new FormData(this);
         const body = Object.fromEntries(fd.entries());
+        if (body.facultad_id) body.facultad_id = parseInt(body.facultad_id);
+        else delete body.facultad_id;
         const url = editingId ? `${API_BASE}/asesores/${editingId}` : `${API_BASE}/asesores/`;
         const method = editingId ? 'PUT' : 'POST';
         const res = await fetch(url, {

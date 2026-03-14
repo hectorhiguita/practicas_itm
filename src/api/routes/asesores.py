@@ -2,6 +2,7 @@
 Rutas de la API para gestionar Asesores de Prácticas
 """
 from flask import Blueprint, request, jsonify
+from flask_login import current_user
 from src.database.connection import get_session
 from src.services.asesor_service import AsesorService
 from src.services.email_service import send_credentials_email
@@ -57,6 +58,9 @@ def crear_asesor():
     datos = request.get_json(silent=True) or {}
     if not datos.get('nombre') or not datos.get('apellido') or not datos.get('email'):
         return _err('nombre, apellido y email son requeridos')
+    tipo = datos.get('tipo', 'asesor')
+    if tipo not in ('asesor', 'asesor_enlace'):
+        return _err('tipo debe ser "asesor" o "asesor_enlace"')
     db = get_session()
     try:
         asesor, plain_pw = AsesorService.crear_asesor(db, datos)
@@ -95,6 +99,8 @@ def actualizar_asesor(asesor_id):
 
 @asesores_bp.route('/<int:asesor_id>', methods=['DELETE'])
 def eliminar_asesor(asesor_id):
+    if hasattr(current_user, 'role') and current_user.role in ('asesor', 'asesor_enlace'):
+        return _err('Sin permisos para eliminar asesores', 403)
     db = get_session()
     try:
         ok = AsesorService.eliminar_asesor(db, asesor_id)

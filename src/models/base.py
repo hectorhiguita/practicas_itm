@@ -22,10 +22,14 @@ class Asesor(Base):
     activo = Column(Boolean, default=True, nullable=False)
     username = Column(String(100), unique=True, nullable=True)
     password_hash = Column(String(255), nullable=True)
+    # tipo: 'asesor' (solo sus estudiantes) | 'asesor_enlace' (todos los de su facultad)
+    tipo = Column(String(20), nullable=False, server_default='asesor')
+    facultad_id = Column(Integer, ForeignKey('facultades.id'), nullable=True)
     fecha_creacion = Column(DateTime, default=datetime.utcnow)
 
-    # Relación con estudiantes (un asesor → muchos estudiantes)
+    # Relaciones
     estudiantes = relationship('Estudiante', back_populates='asesor')
+    facultad = relationship('Facultad', foreign_keys=[facultad_id])
 
     def __repr__(self):
         return f"<Asesor(id={self.id}, nombre='{self.nombre} {self.apellido}')>"
@@ -39,6 +43,9 @@ class Asesor(Base):
             'email': self.email,
             'telefono': self.telefono,
             'activo': self.activo,
+            'tipo': self.tipo or 'asesor',
+            'facultad_id': self.facultad_id,
+            'facultad_nombre': self.facultad.nombre if self.facultad else None,
             'fecha_creacion': self.fecha_creacion.isoformat() if self.fecha_creacion else None,
         }
 
