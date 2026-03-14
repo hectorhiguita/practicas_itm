@@ -8,7 +8,12 @@ load_dotenv()
 
 class Config:
     """Configuración base"""
-    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key')
+    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+
+    # Auth - Credenciales locales (usar hash bcrypt en producción)
+    # Generar hash: python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('tu_password'))"
+    ADMIN_USER = os.getenv('ADMIN_USER', 'admin')
+    ADMIN_PASSWORD_HASH = os.getenv('ADMIN_PASSWORD_HASH', '')
     
     # Database
     DB_HOST = os.getenv('DB_HOST', 'localhost')

@@ -1,6 +1,16 @@
 // API Configuration
 const API_BASE = '/api';
 
+// Interceptor global: si cualquier respuesta es 401, redirigir al login
+const _origFetch = window.fetch;
+window.fetch = async function(...args) {
+    const res = await _origFetch(...args);
+    if (res.status === 401) {
+        window.location.href = '/auth/login';
+    }
+    return res;
+};
+
 // DOM Elements
 const sections = document.querySelectorAll('.section');
 const menuItems = document.querySelectorAll('.menu-item');

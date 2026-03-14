@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar sesión - Prácticas ITM</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1B1464 0%, #56ACDE 100%);
+        }
+
+        .login-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #1B1464 0%, #56ACDE 100%);
+            padding: 36px 32px 28px;
+            text-align: center;
+            color: white;
+        }
+
+        .card-header img {
+            height: 64px;
+            margin-bottom: 14px;
+            filter: brightness(0) invert(1);
+        }
+
+        .card-header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .card-header p {
+            font-size: 13px;
+            opacity: 0.85;
+            margin-top: 4px;
+        }
+
+        .card-body {
+            padding: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #2C2C2C;
+            margin-bottom: 6px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid #E0E0E0;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #2C2C2C;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            border-color: #1B1464;
+        }
+
+        .remember-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 22px;
+        }
+
+        .remember-row input { width: auto; }
+        .remember-row label { margin: 0; font-weight: 400; color: #666; font-size: 13px; }
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #1B1464 0%, #0066CC 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:hover { opacity: 0.92; }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 22px 0;
+            color: #999;
+            font-size: 12px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #E0E0E0;
+        }
+
+        .btn-oauth {
+            width: 100%;
+            padding: 11px;
+            background: #fff;
+            border: 1.5px solid #E0E0E0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #999;
+            cursor: not-allowed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .btn-oauth svg { width: 20px; height: 20px; opacity: 0.45; }
+
+        .badge-soon {
+            position: absolute;
+            right: 14px;
+            background: #f0f0f0;
+            color: #999;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 20px;
+            letter-spacing: 0.3px;
+        }
+
+        .error-msg {
+            background: #fff0f0;
+            border: 1px solid #ffb3b3;
+            color: #c0392b;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 18px;
+            display: none;
+        }
+
+        .error-msg.visible { display: block; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="card-header">
+            <img src="/static/logo-itm.png" alt="Logo ITM" onerror="this.style.display='none'">
+            <h1>Prácticas Profesionales ITM</h1>
+            <p>Sistema de Gestión — Acceso restringido</p>
+        </div>
+        <div class="card-body">
+            <div class="error-msg" id="errorMsg"></div>
+
+            <div class="form-group">
+                <label for="username">Usuario</label>
+                <input type="text" id="username" placeholder="nombre de usuario" autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <div class="remember-row">
+                <input type="checkbox" id="remember">
+                <label for="remember">Recordar sesión</label>
+            </div>
+
+            <button class="btn-primary" id="btnLogin">Iniciar sesión</button>
+
+            <div class="divider">o continúa con</div>
+
+            <button class="btn-oauth" disabled title="Próximamente">
+                <!-- Microsoft logo -->
+                <svg viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+                    <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+                    <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+                    <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+                </svg>
+                Iniciar sesión con Microsoft 365
+                <span class="badge-soon">PRÓXIMAMENTE</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const btnLogin = document.getElementById('btnLogin');
+        const errorMsg = document.getElementById('errorMsg');
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorMsg.classList.add('visible');
+        }
+
+        function clearError() {
+            errorMsg.classList.remove('visible');
+        }
+
+        async function doLogin() {
+            clearError();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const remember = document.getElementById('remember').checked;
+
+            if (!username || !password) {
+                showError('Por favor ingresa usuario y contraseña.');
+                return;
+            }
+
+            btnLogin.disabled = true;
+            btnLogin.textContent = 'Verificando...';
+
+            try {
+                const res = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, remember }),
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    window.location.href = '/';
+                } else {
+                    showError(data.error || 'Error al iniciar sesión.');
+                }
+            } catch (e) {
+                showError('No se pudo conectar con el servidor.');
+            } finally {
+                btnLogin.disabled = false;
+                btnLogin.textContent = 'Iniciar sesión';
+            }
+        }
+
+        btnLogin.addEventListener('click', doLogin);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') doLogin();
+        });
+    </script>
+</body>
+</html>

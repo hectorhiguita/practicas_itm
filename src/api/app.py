@@ -1,13 +1,16 @@
 """
 Aplicación Flask - Punto de entrada principal para la API
 """
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, send_from_directory, redirect, request
 import os
 from src.config import get_config
 from src.api.routes import estudiantes, facultades, carreras, programas
 from src.api.routes.importar import importar_bp
+from src.api.routes.auth import auth_bp
+from src.api.auth.manager import login_manager
 from src.database.connection import test_connection
 from src.database.init_db import init_database
+from flask_login import current_user
 
 def create_app(config=None):
     """
@@ -37,12 +40,30 @@ def create_app(config=None):
     if not os.environ.get('SKIP_DB_INIT'):
         init_database()
 
+    # Inicializar Flask-Login
+    login_manager.init_app(app)
+
     # Registrar blueprints
+    app.register_blueprint(auth_bp)
     app.register_blueprint(estudiantes.bp)
     app.register_blueprint(facultades.bp)
     app.register_blueprint(carreras.bp)
     app.register_blueprint(programas.programas_bp)
     app.register_blueprint(importar_bp)
+
+    # Guard de autenticación global
+    _OPEN_PREFIXES = ('/auth/', '/static/', '/api/health')
+
+    @app.before_request
+    def require_login():
+        if any(request.path.startswith(p) for p in _OPEN_PREFIXES):
+            return
+        if current_user.is_authenticated:
+            return
+        # Peticiones AJAX/API → 401 JSON para que el frontend redirija
+        if request.path.startswith('/api/') or request.accept_mimetypes.best == 'application/json':
+            return jsonify({'error': 'No autenticado', 'redirect': '/auth/login'}), 401
+        return redirect('/auth/login')
     
     # Ruta de prueba
     @app.route('/api/health', methods=['GET'])
