@@ -103,51 +103,54 @@ function switchSection(section) {
 let _chartAsesorEst = null;
 let _chartAsesorEstados = null;
 
-async function loadDashboard() {
+async function _safeFetch(url, key) {
     try {
-        const [estudiantesRes, programasRes, facultadesRes, asesoresRes] = await Promise.all([
-            fetch(`${API_BASE}/estudiantes/`),
-            fetch(`${API_BASE}/programas/`),
-            fetch(`${API_BASE}/facultades/`),
-            fetch(`${API_BASE}/asesores/`),
-        ]);
+        const res = await fetch(url);
+        const json = await res.json();
+        return json[key] || [];
+    } catch (e) {
+        console.error(`Error fetching ${url}:`, e);
+        return [];
+    }
+}
 
-        const estudiantes = (await estudiantesRes.json()).datos || [];
-        const programas   = (await programasRes.json()).data || [];
-        const facultades  = (await facultadesRes.json()).datos || [];
-        const asesores    = (await asesoresRes.json()).datos || [];
+async function loadDashboard() {
+    const [estudiantes, programas, facultades, asesores] = await Promise.all([
+        _safeFetch(`${API_BASE}/estudiantes/`, 'datos'),
+        _safeFetch(`${API_BASE}/programas/`, 'data'),
+        _safeFetch(`${API_BASE}/facultades/`, 'datos'),
+        _safeFetch(`${API_BASE}/asesores/`, 'datos'),
+    ]);
 
-        // ── Contadores ────────────────────────────────────────────────────────
-        document.getElementById('total-estudiantes').textContent = estudiantes.length;
-        document.getElementById('disponibles').textContent  = estudiantes.filter(e => e.estado_practica === 'Disponible').length;
-        document.getElementById('contratados').textContent  = estudiantes.filter(e => e.estado_practica === 'Contratado').length;
-        document.getElementById('finalizados').textContent  = estudiantes.filter(e => e.estado_practica === 'Finalizó').length;
-        document.getElementById('total-programas').textContent  = programas.length;
-        document.getElementById('total-facultades').textContent = facultades.length;
+    // ── Contadores ────────────────────────────────────────────────────────
+    document.getElementById('total-estudiantes').textContent = estudiantes.length;
+    document.getElementById('disponibles').textContent  = estudiantes.filter(e => e.estado_practica === 'Disponible').length;
+    document.getElementById('contratados').textContent  = estudiantes.filter(e => e.estado_practica === 'Contratado').length;
+    document.getElementById('finalizados').textContent  = estudiantes.filter(e => e.estado_practica === 'Finalizó').length;
+    document.getElementById('total-programas').textContent  = programas.length;
+    document.getElementById('total-facultades').textContent = facultades.length;
 
-        // ── Estudiantes recientes ─────────────────────────────────────────────
-        const recentList = document.getElementById('recent-list');
-        const recent = estudiantes.slice(0, 5);
-        recentList.innerHTML = recent.length === 0
-            ? '<div class="empty-state"><p>No hay estudiantes registrados</p></div>'
-            : recent.map(est => `
+    // ── Estudiantes recientes ─────────────────────────────────────────────
+    const recentList = document.getElementById('recent-list');
+    const recent = estudiantes.slice(0, 5);
+    recentList.innerHTML = recent.length === 0
+        ? '<div class="empty-state"><p>No hay estudiantes registrados</p></div>'
+        : recent.map(est => {
+            const estado = est.estado_practica || 'desconocido';
+            return `
                 <div class="list-item">
                     <div class="item-info">
                         <div class="item-title">${est.nombre} ${est.apellido}</div>
                         <div class="item-detail">Documento: ${est.numero_documento}</div>
                         <div class="item-detail">Email: ${est.email}</div>
-                        <span class="item-badge badge-${est.estado_practica.toLowerCase().replace(' ', '-')}">${est.estado_practica}</span>
+                        <span class="item-badge badge-${estado.toLowerCase().replace(' ', '-')}">${estado}</span>
                     </div>
-                </div>`).join('');
+                </div>`;
+        }).join('');
 
-        // ── Tortas de Asesores ────────────────────────────────────────────────
-        _renderChartAsesorEstudiantes(asesores);
-        _renderChartAsesorEstados(asesores);
-
-    } catch (error) {
-        console.error('Error loading dashboard:', error);
-        showToast('Error al cargar el dashboard', true);
-    }
+    // ── Tortas de Asesores ────────────────────────────────────────────────
+    _renderChartAsesorEstudiantes(asesores);
+    _renderChartAsesorEstados(asesores);
 }
 
 const _CHART_PALETTE = [
