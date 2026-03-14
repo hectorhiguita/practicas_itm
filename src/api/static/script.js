@@ -142,9 +142,55 @@ async function loadDashboard() {
     }
 }
 
+// ── Semáforo de contrato ──────────────────────────────────────────────────────
+function calcularSemaforo(est) {
+    if (!est.fecha_fin_contrato) return '';
+
+    const ahora = new Date();
+    const fin = new Date(est.fecha_fin_contrato);
+    const inicio = est.fecha_inicio_contrato ? new Date(est.fecha_inicio_contrato) : null;
+    const diasRestantes = Math.ceil((fin - ahora) / (1000 * 60 * 60 * 24));
+
+    let color;
+    if (diasRestantes > 30) {
+        color = '#27AE60';
+    } else if (diasRestantes > 0) {
+        color = '#F39C12';
+    } else {
+        color = '#E74C3C';
+    }
+
+    let progreso = 100;
+    if (inicio) {
+        const total = fin - inicio;
+        const transcurrido = ahora - inicio;
+        progreso = Math.min(100, Math.max(0, Math.round((transcurrido / total) * 100)));
+    }
+
+    const finStr = fin.toLocaleDateString('es-CO');
+    const inicioStr = inicio ? inicio.toLocaleDateString('es-CO') : '-';
+    const diasLabel = diasRestantes > 0
+        ? `${diasRestantes} día${diasRestantes !== 1 ? 's' : ''} restante${diasRestantes !== 1 ? 's' : ''}`
+        : 'Contrato vencido';
+
+    return `
+        <div class="semaforo-contrato">
+            <span class="semaforo-dot" style="background:${color};box-shadow:0 0 0 3px ${color}33;"></span>
+            <div class="semaforo-info">
+                <div class="semaforo-barra-bg">
+                    <div class="semaforo-barra-fg" style="width:${progreso}%;background:${color};"></div>
+                </div>
+                <span class="semaforo-label" style="color:${color};">${diasLabel} &nbsp;·&nbsp; ${inicioStr} → ${finStr}</span>
+            </div>
+        </div>`;
+}
+
 // Estudiantes Management
 async function loadEstudiantes() {
     try {
+        // Actualizar automáticamente estados por vencimiento de contrato
+        await fetch(`${API_BASE}/estudiantes/revisar-estados`, { method: 'POST' }).catch(() => {});
+
         const res = await fetch(`${API_BASE}/estudiantes/`);
         const data = await res.json();
         currentData = data.datos || [];
@@ -173,6 +219,7 @@ function renderEstudiantes(estudiantes) {
                 <div>
                     <span class="item-badge badge-${est.estado_practica.toLowerCase().replace(' ', '-')}">${est.estado_practica}</span>
                 </div>
+                ${calcularSemaforo(est)}
             </div>
             <div class="item-actions">
                 <button class="btn btn-edit" onclick="editEstudiante(${est.id})">Editar</button>
@@ -255,7 +302,23 @@ let _contratoEstudianteId = null;
 function abrirModalContrato(id, nombre) {
     _contratoEstudianteId = id;
     document.getElementById('contrato-nombre').textContent = nombre;
-    document.getElementById('contrato-fecha').value = '';
+
+    const today = new Date().toISOString().substring(0, 10);
+    document.getElementById('contrato-fecha').value = today;
+
+    const fin = new Date();
+    fin.setMonth(fin.getMonth() + 6);
+    document.getElementById('contrato-fecha-fin').value = fin.toISOString().substring(0, 10);
+
+    // Actualizar fecha fin automáticamente al cambiar inicio
+    document.getElementById('contrato-fecha').onchange = function () {
+        if (this.value) {
+            const inicio = new Date(this.value);
+            inicio.setMonth(inicio.getMonth() + 6);
+            document.getElementById('contrato-fecha-fin').value = inicio.toISOString().substring(0, 10);
+        }
+    };
+
     document.getElementById('modal-contrato').classList.add('active');
 }
 
@@ -266,25 +329,27 @@ function cerrarModalContrato(event) {
 }
 
 async function confirmarContrato() {
-    const fecha = document.getElementById('contrato-fecha').value;
-    if (!fecha) {
+    const fechaInicio = document.getElementById('contrato-fecha').value;
+    const fechaFin = document.getElementById('contrato-fecha-fin').value;
+    if (!fechaInicio) {
         showToast('Selecciona una fecha de inicio', true);
         return;
     }
     document.getElementById('modal-contrato').classList.remove('active');
-    await changeEstudianteStatus(_contratoEstudianteId, 'Contratado', fecha);
+    await changeEstudianteStatus(_contratoEstudianteId, 'Contratado', fechaInicio, fechaFin || null);
     _contratoEstudianteId = null;
 }
 
 function toggleFechaContrato(estado) {
     const group = document.getElementById('fecha-contrato-group');
-    if (group) group.style.display = estado === 'Contratado' ? 'block' : 'none';
+    if (group) group.style.display = ['Contratado', 'Por Finalizar'].includes(estado) ? 'block' : 'none';
 }
 
-async function changeEstudianteStatus(id, newStatus, fechaInicio = null) {
+async function changeEstudianteStatus(id, newStatus, fechaInicio = null, fechaFin = null) {
     try {
         const body = { estado: newStatus };
         if (fechaInicio) body.fecha_inicio_contrato = fechaInicio;
+        if (fechaFin) body.fecha_fin_contrato = fechaFin;
         const res = await fetch(`${API_BASE}/estudiantes/${id}/estado`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -395,10 +460,13 @@ async function editEstudiante(id) {
                     <option value="Finalizó" ${estudiante.estado_practica === 'Finalizó' ? 'selected' : ''}>Finalizó</option>
                 </select>
             </div>
-            <div class="form-group" id="fecha-contrato-group" style="display: ${estudiante.estado_practica === 'Contratado' ? 'block' : 'none'};">
+            <div class="form-group" id="fecha-contrato-group" style="display: ${['Contratado', 'Por Finalizar'].includes(estudiante.estado_practica) ? 'block' : 'none'};">
                 <label for="fecha_inicio_contrato">Fecha de inicio del contrato</label>
                 <input type="date" id="fecha_inicio_contrato" name="fecha_inicio_contrato"
                     value="${estudiante.fecha_inicio_contrato ? estudiante.fecha_inicio_contrato.substring(0, 10) : ''}">
+                <label for="fecha_fin_contrato" style="margin-top:8px;display:block;">Fecha de fin del contrato</label>
+                <input type="date" id="fecha_fin_contrato" name="fecha_fin_contrato"
+                    value="${estudiante.fecha_fin_contrato ? estudiante.fecha_fin_contrato.substring(0, 10) : ''}">
             </div>
         `;
 
