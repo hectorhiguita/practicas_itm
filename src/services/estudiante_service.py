@@ -121,67 +121,40 @@ class EstudianteService:
         return db.query(Estudiante).filter(Estudiante.email == email).first()
     
     @staticmethod
-    def obtener_todos_estudiantes(db: Session) -> List[Estudiante]:
-        """
-        Obtiene todos los estudiantes
-        
-        Args:
-            db: Sesión de base de datos
-            
-        Returns:
-            Lista de estudiantes
-        """
-        return db.query(Estudiante).all()
-    
+    def obtener_todos_estudiantes(db: Session, asesor_id: int = None) -> List[Estudiante]:
+        """Obtiene todos los estudiantes. Si asesor_id está presente, filtra por ese asesor."""
+        q = db.query(Estudiante)
+        if asesor_id is not None:
+            q = q.filter(Estudiante.asesor_id == asesor_id)
+        return q.all()
+
     @staticmethod
-    def obtener_estudiantes_por_facultad(db: Session, facultad_id: int) -> List[Estudiante]:
-        """
-        Obtiene todos los estudiantes de una facultad
-        
-        Args:
-            db: Sesión de base de datos
-            facultad_id: ID de la facultad
-            
-        Returns:
-            Lista de estudiantes
-        """
-        return db.query(Estudiante).filter(Estudiante.facultad_id == facultad_id).all()
-    
+    def obtener_estudiantes_por_facultad(db: Session, facultad_id: int, asesor_id: int = None) -> List[Estudiante]:
+        """Obtiene estudiantes de una facultad, opcionalmente filtrados por asesor."""
+        q = db.query(Estudiante).filter(Estudiante.facultad_id == facultad_id)
+        if asesor_id is not None:
+            q = q.filter(Estudiante.asesor_id == asesor_id)
+        return q.all()
+
     @staticmethod
-    def obtener_estudiantes_por_carrera(db: Session, carrera_id: int) -> List[Estudiante]:
-        """
-        Obtiene todos los estudiantes de una carrera
-        
-        Args:
-            db: Sesión de base de datos
-            carrera_id: ID de la carrera
-            
-        Returns:
-            Lista de estudiantes
-        """
-        return db.query(Estudiante).filter(Estudiante.carrera_id == carrera_id).all()
-    
+    def obtener_estudiantes_por_carrera(db: Session, carrera_id: int, asesor_id: int = None) -> List[Estudiante]:
+        """Obtiene estudiantes de una carrera, opcionalmente filtrados por asesor."""
+        q = db.query(Estudiante).filter(Estudiante.carrera_id == carrera_id)
+        if asesor_id is not None:
+            q = q.filter(Estudiante.asesor_id == asesor_id)
+        return q.all()
+
     @staticmethod
-    def obtener_estudiantes_por_estado(db: Session, estado: str) -> List[Estudiante]:
-        """
-        Obtiene estudiantes por estado de práctica
-        
-        Args:
-            db: Sesión de base de datos
-            estado: Estado de práctica (Disponible, Contratado, etc)
-            
-        Returns:
-            Lista de estudiantes
-            
-        Raises:
-            ValueError: Si el estado es inválido
-        """
+    def obtener_estudiantes_por_estado(db: Session, estado: str, asesor_id: int = None) -> List[Estudiante]:
+        """Obtiene estudiantes por estado, opcionalmente filtrados por asesor."""
         try:
             estado_enum = EstadoPractica[estado.upper()] if isinstance(estado, str) else estado
         except (KeyError, AttributeError):
             raise ValueError(f"Estado inválido: {estado}")
-        
-        return db.query(Estudiante).filter(Estudiante.estado_practica == estado_enum).all()
+        q = db.query(Estudiante).filter(Estudiante.estado_practica == estado_enum)
+        if asesor_id is not None:
+            q = q.filter(Estudiante.asesor_id == asesor_id)
+        return q.all()
     
     @staticmethod
     def obtener_estudiantes_disponibles(db: Session) -> List[Estudiante]:

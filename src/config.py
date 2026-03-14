@@ -38,6 +38,14 @@ class Config:
     EFS_CV_PATH = os.getenv('EFS_CV_PATH', '/mnt/efs/cvs')
     CV_MAX_SIZE_MB = int(os.getenv('CV_MAX_SIZE_MB', '5'))
 
+    # Email - O365 SMTP (smtp.office365.com:587)
+    MAIL_SERVER   = os.getenv('MAIL_SERVER', 'smtp.office365.com')
+    MAIL_PORT     = int(os.getenv('MAIL_PORT', '587'))
+    MAIL_USE_TLS  = os.getenv('MAIL_USE_TLS', 'True') == 'True'
+    MAIL_USERNAME = os.getenv('MAIL_USERNAME', '')
+    MAIL_PASSWORD = os.getenv('MAIL_PASSWORD', '')
+    MAIL_FROM     = os.getenv('MAIL_FROM', '')
+
 class DevelopmentConfig(Config):
     """Configuración para desarrollo"""
     DEBUG = True

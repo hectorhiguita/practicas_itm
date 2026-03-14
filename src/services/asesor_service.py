@@ -1,7 +1,11 @@
 """
 Servicio para gestión de Asesores de Prácticas
 """
+import re
+import secrets
+import unicodedata
 from sqlalchemy.orm import Session
+from werkzeug.security import generate_password_hash
 from src.models.base import Asesor, Estudiante
 from src.utils.enums import EstadoPractica
 
@@ -11,6 +15,32 @@ ESTADO_ACTIVO = {
     EstadoPractica.CONTRATADO,
     EstadoPractica.POR_FINALIZAR,
 }
+
+
+def _normalizar(texto: str) -> str:
+    """Convierte 'Ángel' → 'angel': minúsculas, sin tildes, solo alfanumérico."""
+    nfkd = unicodedata.normalize('NFKD', texto)
+    sin_tildes = ''.join(c for c in nfkd if not unicodedata.combining(c))
+    return re.sub(r'[^a-z0-9]', '', sin_tildes.lower())
+
+
+def _generar_username(db: Session, nombre: str, apellido: str) -> str:
+    """
+    Genera un username único: primera letra del nombre + apellido (normalizado).
+    Si ya existe, agrega sufijo numérico.
+    """
+    base = _normalizar(nombre[:1]) + _normalizar(apellido)
+    candidato = base
+    n = 1
+    while db.query(Asesor).filter(Asesor.username == candidato).first():
+        candidato = f"{base}{n}"
+        n += 1
+    return candidato
+
+
+def _generar_password() -> str:
+    """Genera una contraseña aleatoria de 12 caracteres."""
+    return secrets.token_urlsafe(9)   # produce ~12 chars base64url
 
 
 class AsesorService:
@@ -27,17 +57,24 @@ class AsesorService:
         return db.query(Asesor).filter(Asesor.id == asesor_id).first()
 
     @staticmethod
-    def crear_asesor(db: Session, datos: dict) -> Asesor:
+    def crear_asesor(db: Session, datos: dict) -> tuple:
+        """Crea el asesor, genera credenciales y retorna (asesor, plain_password)."""
+        nombre   = datos['nombre'].strip()
+        apellido = datos['apellido'].strip()
+        username = _generar_username(db, nombre, apellido)
+        plain_pw = _generar_password()
         asesor = Asesor(
-            nombre=datos['nombre'].strip(),
-            apellido=datos['apellido'].strip(),
+            nombre=nombre,
+            apellido=apellido,
             email=datos['email'].strip().lower(),
             telefono=datos.get('telefono', '').strip() or None,
+            username=username,
+            password_hash=generate_password_hash(plain_pw),
         )
         db.add(asesor)
         db.commit()
         db.refresh(asesor)
-        return asesor
+        return asesor, plain_pw
 
     @staticmethod
     def actualizar_asesor(db: Session, asesor_id: int, datos: dict) -> Asesor:

@@ -20,6 +20,8 @@ class Asesor(Base):
     email = Column(String(200), unique=True, nullable=False)
     telefono = Column(String(20), nullable=True)
     activo = Column(Boolean, default=True, nullable=False)
+    username = Column(String(100), unique=True, nullable=True)
+    password_hash = Column(String(255), nullable=True)
     fecha_creacion = Column(DateTime, default=datetime.utcnow)
 
     # Relación con estudiantes (un asesor → muchos estudiantes)
