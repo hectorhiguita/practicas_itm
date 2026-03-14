@@ -69,6 +69,7 @@ def crear_asesor():
         )
         respuesta = asesor.to_dict()
         respuesta['username'] = asesor.username
+        respuesta['password_temporal'] = plain_pw   # mostrado una sola vez en pantalla
         respuesta['email_enviado'] = email_ok
         return _ok(respuesta, 'Asesor creado exitosamente', 201)
     except Exception as e:
