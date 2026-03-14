@@ -38,7 +38,9 @@ def _verify_local(username: str, password: str):
             Asesor.activo == True,
         ).first()
         if asesor and asesor.password_hash and check_password_hash(asesor.password_hash, password):
-            return AppUser(f'asesor_{asesor.id}', asesor.username, role='asesor', asesor_id=asesor.id)
+            role = asesor.tipo or 'asesor'
+            return AppUser(f'asesor_{asesor.id}', asesor.username, role=role,
+                           asesor_id=asesor.id, facultad_id=asesor.facultad_id)
     finally:
         db.close()
 
@@ -89,6 +91,20 @@ def login():
         return jsonify({'ok': True, 'role': user.role}), 200
 
     return jsonify({'error': 'Credenciales incorrectas'}), 401
+
+
+@auth_bp.route('/me', methods=['GET'])
+def me():
+    """Retorna el rol e info del usuario actual (o anonymous si no está autenticado)."""
+    if not current_user.is_authenticated:
+        return jsonify({'role': 'anonymous'}), 200
+    return jsonify({
+        'username': current_user.username,
+        'role': current_user.role,
+        'asesor_id': getattr(current_user, 'asesor_id', None),
+        'facultad_id': getattr(current_user, 'facultad_id', None),
+        'is_admin': current_user.is_admin,
+    }), 200
 
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])

@@ -42,10 +42,28 @@ def listar_estudiantes():
         carrera_id = request.args.get('carrera_id', type=int)
         estado = request.args.get('estado', type=str)
 
-        # Asesores solo ven sus propios estudiantes
+        # Visibilidad según rol
         asesor_filter = None
-        if hasattr(current_user, 'role') and current_user.role == 'asesor':
-            asesor_filter = current_user.asesor_id
+        if hasattr(current_user, 'role'):
+            if current_user.role == 'asesor':
+                # Solo sus estudiantes asignados
+                asesor_filter = current_user.asesor_id
+            elif current_user.role == 'asesor_enlace':
+                # Todos los estudiantes de su facultad (ignora filtros de otras facultades)
+                fac = current_user.facultad_id
+                if not fac:
+                    db.close()
+                    return respuesta_exito([], "Sin facultad asignada")
+                estudiantes = EstudianteService.obtener_estudiantes_por_facultad(db, fac)
+                if estado:
+                    from src.utils.enums import EstadoPractica
+                    for est_enum in EstadoPractica:
+                        if est_enum.value == estado:
+                            estudiantes = [e for e in estudiantes if e.estado_practica == est_enum]
+                            break
+                db.close()
+                datos = [e.to_dict() for e in estudiantes]
+                return respuesta_exito(datos, f"Se encontraron {len(datos)} estudiantes")
 
         if facultad_id:
             estudiantes = EstudianteService.obtener_estudiantes_por_facultad(db, facultad_id, asesor_id=asesor_filter)
@@ -102,7 +120,8 @@ def crear_estudiante():
             genero=datos['genero'],
             facultad_id=datos['facultad_id'],
             carrera_id=datos['carrera_id'],
-            telefono=datos.get('telefono')
+            telefono=datos.get('telefono'),
+            asesor_id=datos.get('asesor_id') or None,
         )
         
         db.close()
@@ -164,6 +183,7 @@ def actualizar_estudiante(estudiante_id):
             discapacidad_personalizada=datos.get('discapacidad_personalizada'),
             fecha_inicio_contrato=datos.get('fecha_inicio_contrato'),
             fecha_fin_contrato=datos.get('fecha_fin_contrato'),
+            asesor_id=datos.get('asesor_id'),
         )
 
         if not estudiante_actualizado:
@@ -217,6 +237,8 @@ def actualizar_estado_practica(estudiante_id):
 @bp.route('/<int:estudiante_id>', methods=['DELETE'])
 def eliminar_estudiante(estudiante_id):
     """Elimina un estudiante"""
+    if hasattr(current_user, 'role') and current_user.role in ('asesor', 'asesor_enlace'):
+        return respuesta_error("Sin permisos para eliminar estudiantes", 403)
     try:
         db = get_session()
         

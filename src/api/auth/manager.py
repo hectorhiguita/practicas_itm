@@ -12,14 +12,17 @@ login_manager.login_view = 'auth.login_page'
 class AppUser(UserMixin):
     """
     Usuario en sesión.
-    - role='admin'  → usuario administrador (credenciales en config/env)
-    - role='asesor' → asesor de prácticas (credenciales en BD)
+    - role='admin'         → administrador (credenciales en config/env)
+    - role='asesor'        → asesor estándar (solo ve sus estudiantes asignados)
+    - role='asesor_enlace' → asesor enlace (ve todos los estudiantes de su facultad)
     """
-    def __init__(self, user_id: str, username: str, role: str = 'admin', asesor_id: int = None):
+    def __init__(self, user_id: str, username: str, role: str = 'admin',
+                 asesor_id: int = None, facultad_id: int = None):
         self.id = user_id          # 'admin' | 'asesor_<id>'
         self.username = username
         self.role = role
         self.asesor_id = asesor_id
+        self.facultad_id = facultad_id
 
     @property
     def is_admin(self):
@@ -46,7 +49,9 @@ def load_user(user_id: str):
                 Asesor.activo == True,
             ).first()
             if asesor and asesor.username:
-                return AppUser(user_id, asesor.username, role='asesor', asesor_id=asesor.id)
+                role = asesor.tipo or 'asesor'
+                return AppUser(user_id, asesor.username, role=role,
+                               asesor_id=asesor.id, facultad_id=asesor.facultad_id)
         finally:
             db.close()
 

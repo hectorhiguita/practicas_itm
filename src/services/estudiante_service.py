@@ -12,7 +12,7 @@ class EstudianteService:
     @staticmethod
     def crear_estudiante(db: Session, numero_documento: str, nombre: str, apellido: str,
                         email: str, genero: str, facultad_id: int, carrera_id: int,
-                        telefono: str = None) -> Estudiante:
+                        telefono: str = None, asesor_id: int = None) -> Estudiante:
         """
         Crea un nuevo estudiante
         
@@ -69,6 +69,7 @@ class EstudianteService:
             facultad_id=facultad_id,
             carrera_id=carrera_id,
             telefono=telefono,
+            asesor_id=asesor_id,
             estado_practica=EstadoPractica.DISPONIBLE
         )
         db.add(estudiante)
@@ -264,7 +265,8 @@ class EstudianteService:
                              tiene_discapacidad: str = None,
                              discapacidad_personalizada: str = None,
                              fecha_inicio_contrato: str = None,
-                             fecha_fin_contrato: str = None) -> Optional[Estudiante]:
+                             fecha_fin_contrato: str = None,
+                             asesor_id: int = None) -> Optional[Estudiante]:
         """
         Actualiza datos de un estudiante
 
@@ -342,10 +344,14 @@ class EstudianteService:
             from datetime import datetime as dt
             estudiante.fecha_fin_contrato = dt.fromisoformat(fecha_fin_contrato)
 
+        # asesor_id=0 o None desasigna; cualquier otro valor asigna
+        if asesor_id is not None:
+            estudiante.asesor_id = int(asesor_id) if asesor_id else None
+
         db.commit()
         db.refresh(estudiante)
         return estudiante
-    
+
     @staticmethod
     def eliminar_estudiante(db: Session, estudiante_id: int) -> bool:
         """

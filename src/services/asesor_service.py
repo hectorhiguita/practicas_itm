@@ -68,6 +68,8 @@ class AsesorService:
             apellido=apellido,
             email=datos['email'].strip().lower(),
             telefono=datos.get('telefono', '').strip() or None,
+            tipo=datos.get('tipo', 'asesor'),
+            facultad_id=datos.get('facultad_id') or None,
             username=username,
             password_hash=generate_password_hash(plain_pw),
         )
@@ -81,7 +83,7 @@ class AsesorService:
         asesor = AsesorService.obtener_asesor(db, asesor_id)
         if not asesor:
             return None
-        for campo in ('nombre', 'apellido', 'email', 'telefono', 'activo'):
+        for campo in ('nombre', 'apellido', 'email', 'telefono', 'activo', 'tipo', 'facultad_id'):
             if campo in datos:
                 val = datos[campo]
                 if isinstance(val, str):

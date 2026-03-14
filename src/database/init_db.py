@@ -183,6 +183,12 @@ def _migrate_asesor_auth_columns():
     _add_column_if_missing('asesores', 'password_hash',  'VARCHAR(255)')
 
 
+def _migrate_asesor_tipo_columns():
+    """Agrega tipo y facultad_id a asesores si no existen."""
+    _add_column_if_missing('asesores', 'tipo',        "VARCHAR(20) DEFAULT 'asesor'")
+    _add_column_if_missing('asesores', 'facultad_id', 'INTEGER REFERENCES facultades(id)')
+
+
 def _migrate_cv_columns():
     """Agrega columnas de CV y asesor a estudiantes si no existen."""
     _add_column_if_missing('estudiantes', 'cv_s3_key',             'VARCHAR(500)')
@@ -208,6 +214,7 @@ def init_database():
         # Migraciones idempotentes
         _ensure_asesores_table()
         _migrate_asesor_auth_columns()
+        _migrate_asesor_tipo_columns()
         _migrate_cv_columns()
 
         from sqlalchemy.orm import sessionmaker
