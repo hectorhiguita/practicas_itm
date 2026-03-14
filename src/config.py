@@ -29,6 +29,11 @@ class Config:
     APP_HOST = os.getenv('APP_HOST', '0.0.0.0')
     APP_PORT = int(os.getenv('APP_PORT', 5000))
 
+    # S3 - Almacenamiento de CVs
+    S3_CV_BUCKET = os.getenv('S3_CV_BUCKET', '')
+    S3_REGION = os.getenv('AWS_REGION', 'us-east-1')
+    CV_MAX_SIZE_MB = int(os.getenv('CV_MAX_SIZE_MB', '5'))
+
 class DevelopmentConfig(Config):
     """Configuración para desarrollo"""
     DEBUG = True

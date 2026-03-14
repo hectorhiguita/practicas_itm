@@ -1,9 +1,11 @@
 """
 Rutas de la API para gestionar estudiantes
 """
-from flask import Blueprint, request, jsonify
+from datetime import datetime
+from flask import Blueprint, request, jsonify, redirect
 from src.database.connection import get_session
 from src.services.estudiante_service import EstudianteService
+from src.services.cv_service import CVService
 from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import BadRequest
 
@@ -285,8 +287,103 @@ def estadisticas_carrera(carrera_id):
         db = get_session()
         estadisticas = EstudianteService.obtener_estadisticas_carrera(db, carrera_id)
         db.close()
-        
+
         return respuesta_exito(estadisticas, "Estadísticas obtenidas")
-    
+
     except Exception as e:
         return respuesta_error(f"Error: {str(e)}", 500)
+
+
+# ── CV Endpoints ──────────────────────────────────────────────────────────────
+
+@bp.route('/<int:estudiante_id>/cv', methods=['POST'])
+def subir_cv(estudiante_id):
+    """
+    Sube el CV en PDF de un estudiante.
+    Form-data: campo 'cv' con el archivo PDF (máx. 5 MB).
+    """
+    try:
+        if 'cv' not in request.files:
+            return respuesta_error("Campo 'cv' requerido en form-data")
+
+        archivo = request.files['cv']
+        if not archivo.filename:
+            return respuesta_error("No se seleccionó ningún archivo")
+
+        db = get_session()
+        estudiante = EstudianteService.obtener_estudiante(db, estudiante_id)
+        if not estudiante:
+            db.close()
+            return respuesta_error("Estudiante no encontrado", 404)
+
+        file_bytes = archivo.read()
+
+        # Eliminar CV anterior si existe
+        if estudiante.cv_s3_key:
+            CVService.delete_cv(estudiante.cv_s3_key)
+
+        s3_key = CVService.upload_cv(estudiante_id, file_bytes, archivo.filename)
+
+        estudiante.cv_s3_key = s3_key
+        estudiante.cv_filename = archivo.filename
+        estudiante.cv_upload_date = datetime.utcnow()
+        db.commit()
+        db.refresh(estudiante)
+        db.close()
+
+        return respuesta_exito(estudiante.to_dict(), "CV subido exitosamente", 201)
+
+    except ValueError as e:
+        return respuesta_error(str(e), 400)
+    except Exception as e:
+        return respuesta_error(f"Error al subir CV: {str(e)}", 500)
+
+
+@bp.route('/<int:estudiante_id>/cv', methods=['GET'])
+def ver_cv(estudiante_id):
+    """Redirige a la URL prefirmada del CV para visualizarlo en el navegador."""
+    try:
+        db = get_session()
+        estudiante = EstudianteService.obtener_estudiante(db, estudiante_id)
+        db.close()
+
+        if not estudiante:
+            return respuesta_error("Estudiante no encontrado", 404)
+        if not estudiante.cv_s3_key:
+            return respuesta_error("El estudiante no tiene CV registrado", 404)
+
+        url = CVService.get_presigned_url(estudiante.cv_s3_key)
+        return redirect(url)
+
+    except ValueError as e:
+        return respuesta_error(str(e), 503)
+    except Exception as e:
+        return respuesta_error(f"Error al obtener CV: {str(e)}", 500)
+
+
+@bp.route('/<int:estudiante_id>/cv', methods=['DELETE'])
+def eliminar_cv(estudiante_id):
+    """Elimina el CV de un estudiante."""
+    try:
+        db = get_session()
+        estudiante = EstudianteService.obtener_estudiante(db, estudiante_id)
+
+        if not estudiante:
+            db.close()
+            return respuesta_error("Estudiante no encontrado", 404)
+        if not estudiante.cv_s3_key:
+            db.close()
+            return respuesta_error("El estudiante no tiene CV registrado", 404)
+
+        CVService.delete_cv(estudiante.cv_s3_key)
+
+        estudiante.cv_s3_key = None
+        estudiante.cv_filename = None
+        estudiante.cv_upload_date = None
+        db.commit()
+        db.close()
+
+        return respuesta_exito(None, "CV eliminado exitosamente")
+
+    except Exception as e:
+        return respuesta_error(f"Error al eliminar CV: {str(e)}", 500)
