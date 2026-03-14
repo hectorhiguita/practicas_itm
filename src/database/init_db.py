@@ -160,54 +160,36 @@ def _ensure_asesores_table():
         print(f"Advertencia al crear tabla asesores: {e}")
 
 
-def _migrate_asesor_auth_columns():
-    """Agrega username y password_hash a asesores si no existen (migración idempotente)."""
-    asesor_columns = [
-        ("username", "VARCHAR(100)"),
-        ("password_hash", "VARCHAR(255)"),
-    ]
+def _add_column_if_missing(table: str, col_name: str, col_type: str):
+    """Agrega una columna a una tabla si no existe. Cada llamada usa su propia conexión."""
     try:
         with engine.connect() as conn:
-            for col_name, col_type in asesor_columns:
-                result = conn.execute(text(
-                    "SELECT column_name FROM information_schema.columns "
-                    "WHERE table_name='asesores' AND column_name=:col"
-                ), {"col": col_name})
-                if not result.fetchone():
-                    conn.execute(text(
-                        f"ALTER TABLE asesores ADD COLUMN {col_name} {col_type}"
-                    ))
-                    conn.commit()
-                    print(f"✓ Columna '{col_name}' agregada a asesores")
+            result = conn.execute(text(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name=:tbl AND column_name=:col"
+            ), {"tbl": table, "col": col_name})
+            if not result.fetchone():
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_type}"))
+                conn.commit()
+                print(f"✓ Columna '{col_name}' agregada a {table}")
     except Exception as e:
-        print(f"Advertencia en migración columnas asesores: {e}")
+        print(f"⚠ No se pudo agregar '{col_name}' a {table}: {e}")
+
+
+def _migrate_asesor_auth_columns():
+    """Agrega username y password_hash a asesores si no existen."""
+    _add_column_if_missing('asesores', 'username',       'VARCHAR(100)')
+    _add_column_if_missing('asesores', 'password_hash',  'VARCHAR(255)')
 
 
 def _migrate_cv_columns():
-    """Agrega columnas de CV y asesor a estudiantes si no existen (migración idempotente)."""
-    estudiante_columns = [
-        ("cv_s3_key", "VARCHAR(500)"),
-        ("cv_filename", "VARCHAR(255)"),
-        ("cv_upload_date", "TIMESTAMP"),
-        ("fecha_inicio_contrato", "TIMESTAMP"),
-        ("fecha_fin_contrato", "TIMESTAMP"),
-        ("asesor_id", "INTEGER REFERENCES asesores(id)"),
-    ]
-    try:
-        with engine.connect() as conn:
-            for col_name, col_type in estudiante_columns:
-                result = conn.execute(text(
-                    "SELECT column_name FROM information_schema.columns "
-                    "WHERE table_name='estudiantes' AND column_name=:col"
-                ), {"col": col_name})
-                if not result.fetchone():
-                    conn.execute(text(
-                        f"ALTER TABLE estudiantes ADD COLUMN {col_name} {col_type}"
-                    ))
-                    conn.commit()
-                    print(f"✓ Columna '{col_name}' agregada a estudiantes")
-    except Exception as e:
-        print(f"Advertencia en migración columnas: {e}")
+    """Agrega columnas de CV y asesor a estudiantes si no existen."""
+    _add_column_if_missing('estudiantes', 'cv_s3_key',             'VARCHAR(500)')
+    _add_column_if_missing('estudiantes', 'cv_filename',            'VARCHAR(255)')
+    _add_column_if_missing('estudiantes', 'cv_upload_date',         'TIMESTAMP')
+    _add_column_if_missing('estudiantes', 'fecha_inicio_contrato',  'TIMESTAMP')
+    _add_column_if_missing('estudiantes', 'fecha_fin_contrato',     'TIMESTAMP')
+    _add_column_if_missing('estudiantes', 'asesor_id',              'INTEGER REFERENCES asesores(id)')
 
 
 def init_database():
