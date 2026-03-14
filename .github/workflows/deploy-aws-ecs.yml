@@ -196,6 +196,7 @@ jobs:
             --cluster "${{ vars.ECS_CLUSTER_NAME }}" \
             --service "${{ vars.ECS_SERVICE_NAME }}" \
             --task-definition "${{ steps.register-task-def.outputs.new_task_def_arn }}" \
+            --force-new-deployment \
             --region "${{ vars.AWS_REGION }}"
           echo "ECS service updated."
 

@@ -1,7 +1,7 @@
 """
 Servicio de lógica de negocio para Estudiantes
 """
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from src.models.base import Estudiante, Facultad, Carrera
 from src.utils.enums import EstadoPractica, Genero
 from typing import List, Optional
@@ -123,7 +123,7 @@ class EstudianteService:
     @staticmethod
     def obtener_todos_estudiantes(db: Session, asesor_id: int = None) -> List[Estudiante]:
         """Obtiene todos los estudiantes. Si asesor_id está presente, filtra por ese asesor."""
-        q = db.query(Estudiante)
+        q = db.query(Estudiante).options(joinedload(Estudiante.asesor))
         if asesor_id is not None:
             q = q.filter(Estudiante.asesor_id == asesor_id)
         return q.all()
@@ -131,7 +131,7 @@ class EstudianteService:
     @staticmethod
     def obtener_estudiantes_por_facultad(db: Session, facultad_id: int, asesor_id: int = None) -> List[Estudiante]:
         """Obtiene estudiantes de una facultad, opcionalmente filtrados por asesor."""
-        q = db.query(Estudiante).filter(Estudiante.facultad_id == facultad_id)
+        q = db.query(Estudiante).options(joinedload(Estudiante.asesor)).filter(Estudiante.facultad_id == facultad_id)
         if asesor_id is not None:
             q = q.filter(Estudiante.asesor_id == asesor_id)
         return q.all()
@@ -139,7 +139,7 @@ class EstudianteService:
     @staticmethod
     def obtener_estudiantes_por_carrera(db: Session, carrera_id: int, asesor_id: int = None) -> List[Estudiante]:
         """Obtiene estudiantes de una carrera, opcionalmente filtrados por asesor."""
-        q = db.query(Estudiante).filter(Estudiante.carrera_id == carrera_id)
+        q = db.query(Estudiante).options(joinedload(Estudiante.asesor)).filter(Estudiante.carrera_id == carrera_id)
         if asesor_id is not None:
             q = q.filter(Estudiante.asesor_id == asesor_id)
         return q.all()
@@ -151,7 +151,7 @@ class EstudianteService:
             estado_enum = EstadoPractica[estado.upper()] if isinstance(estado, str) else estado
         except (KeyError, AttributeError):
             raise ValueError(f"Estado inválido: {estado}")
-        q = db.query(Estudiante).filter(Estudiante.estado_practica == estado_enum)
+        q = db.query(Estudiante).options(joinedload(Estudiante.asesor)).filter(Estudiante.estado_practica == estado_enum)
         if asesor_id is not None:
             q = q.filter(Estudiante.asesor_id == asesor_id)
         return q.all()
