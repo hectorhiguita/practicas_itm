@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prácticas profesionales ITM - Dashboard</title>
     <link rel="stylesheet" href="/static/styles.css?v=20260315">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -100,6 +101,24 @@
                                 <h3>Finalizados</h3>
                                 <p class="stat-number" id="finalizados">0</p>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Gráficas de Asesores -->
+                    <div class="charts-row">
+                        <div class="chart-card">
+                            <h3>Estudiantes activos por Asesor</h3>
+                            <div class="chart-wrap">
+                                <canvas id="chart-asesores-estudiantes"></canvas>
+                            </div>
+                            <p class="chart-empty" id="chart-asesores-empty" style="display:none">Sin asesores registrados</p>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Estado de estudiantes por Asesor</h3>
+                            <div class="chart-wrap">
+                                <canvas id="chart-asesores-estados"></canvas>
+                            </div>
+                            <p class="chart-empty" id="chart-estados-empty" style="display:none">Sin datos de estados</p>
                         </div>
                     </div>
 

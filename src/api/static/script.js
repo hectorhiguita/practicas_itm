@@ -100,45 +100,37 @@ function switchSection(section) {
 }
 
 // Dashboard
+let _chartAsesorEst = null;
+let _chartAsesorEstados = null;
+
 async function loadDashboard() {
     try {
-        // Load estudiantes
-        const estudiantesRes = await fetch(`${API_BASE}/estudiantes/`);
-        const estudiantesData = await estudiantesRes.json();
-        const estudiantes = estudiantesData.datos || [];
-        
-        // Load programas
-        const programasRes = await fetch(`${API_BASE}/programas/`);
-        const programasData = await programasRes.json();
-        const programas = programasData.data || [];
-        
-        // Load facultades
-        const facultadesRes = await fetch(`${API_BASE}/facultades/`);
-        const facultadesData = await facultadesRes.json();
-        const facultades = facultadesData.datos || [];
-        
-        // Calculate stats
-        const totalEstudiantes = estudiantes.length;
-        const disponibles = estudiantes.filter(e => e.estado_practica === 'Disponible').length;
-        const contratados = estudiantes.filter(e => e.estado_practica === 'Contratado').length;
-        const finalizados = estudiantes.filter(e => e.estado_practica === 'Finalizó').length;
-        
-        // Update stats
-        document.getElementById('total-estudiantes').textContent = totalEstudiantes;
-        document.getElementById('disponibles').textContent = disponibles;
-        document.getElementById('contratados').textContent = contratados;
-        document.getElementById('finalizados').textContent = finalizados;
-        document.getElementById('total-programas').textContent = programas.length;
+        const [estudiantesRes, programasRes, facultadesRes, asesoresRes] = await Promise.all([
+            fetch(`${API_BASE}/estudiantes/`),
+            fetch(`${API_BASE}/programas/`),
+            fetch(`${API_BASE}/facultades/`),
+            fetch(`${API_BASE}/asesores/`),
+        ]);
+
+        const estudiantes = (await estudiantesRes.json()).datos || [];
+        const programas   = (await programasRes.json()).data || [];
+        const facultades  = (await facultadesRes.json()).datos || [];
+        const asesores    = (await asesoresRes.json()).datos || [];
+
+        // ── Contadores ────────────────────────────────────────────────────────
+        document.getElementById('total-estudiantes').textContent = estudiantes.length;
+        document.getElementById('disponibles').textContent  = estudiantes.filter(e => e.estado_practica === 'Disponible').length;
+        document.getElementById('contratados').textContent  = estudiantes.filter(e => e.estado_practica === 'Contratado').length;
+        document.getElementById('finalizados').textContent  = estudiantes.filter(e => e.estado_practica === 'Finalizó').length;
+        document.getElementById('total-programas').textContent  = programas.length;
         document.getElementById('total-facultades').textContent = facultades.length;
-        
-        // Load recent estudiantes
+
+        // ── Estudiantes recientes ─────────────────────────────────────────────
         const recentList = document.getElementById('recent-list');
         const recent = estudiantes.slice(0, 5);
-        
-        if (recent.length === 0) {
-            recentList.innerHTML = '<div class="empty-state"><p>No hay estudiantes registrados</p></div>';
-        } else {
-            recentList.innerHTML = recent.map(est => `
+        recentList.innerHTML = recent.length === 0
+            ? '<div class="empty-state"><p>No hay estudiantes registrados</p></div>'
+            : recent.map(est => `
                 <div class="list-item">
                     <div class="item-info">
                         <div class="item-title">${est.nombre} ${est.apellido}</div>
@@ -146,13 +138,117 @@ async function loadDashboard() {
                         <div class="item-detail">Email: ${est.email}</div>
                         <span class="item-badge badge-${est.estado_practica.toLowerCase().replace(' ', '-')}">${est.estado_practica}</span>
                     </div>
-                </div>
-            `).join('');
-        }
+                </div>`).join('');
+
+        // ── Tortas de Asesores ────────────────────────────────────────────────
+        _renderChartAsesorEstudiantes(asesores);
+        _renderChartAsesorEstados(asesores);
+
     } catch (error) {
         console.error('Error loading dashboard:', error);
         showToast('Error al cargar el dashboard', true);
     }
+}
+
+const _CHART_PALETTE = [
+    '#1B1464','#56ACDE','#27AE60','#F39C12','#E74C3C',
+    '#8E44AD','#2980B9','#16A085','#D35400','#7F8C8D',
+];
+
+function _renderChartAsesorEstudiantes(asesores) {
+    const activos = asesores.filter(a => a.activo && (a.estadisticas?.total_activos ?? 0) > 0);
+    const canvas  = document.getElementById('chart-asesores-estudiantes');
+    const empty   = document.getElementById('chart-asesores-empty');
+
+    if (_chartAsesorEst) { _chartAsesorEst.destroy(); _chartAsesorEst = null; }
+
+    if (!activos.length) {
+        canvas.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+    }
+    canvas.style.display = 'block';
+    empty.style.display = 'none';
+
+    _chartAsesorEst = new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+            labels: activos.map(a => a.nombre_completo),
+            datasets: [{
+                data: activos.map(a => a.estadisticas.total_activos),
+                backgroundColor: activos.map((_, i) => _CHART_PALETTE[i % _CHART_PALETTE.length]),
+                borderWidth: 2,
+                borderColor: '#fff',
+            }],
+        },
+        options: {
+            cutout: '62%',
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { size: 12 }, padding: 12 } },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ` ${ctx.label}: ${ctx.parsed} estudiante${ctx.parsed !== 1 ? 's' : ''}`,
+                    },
+                },
+            },
+        },
+    });
+}
+
+function _renderChartAsesorEstados(asesores) {
+    const canvas = document.getElementById('chart-asesores-estados');
+    const empty  = document.getElementById('chart-estados-empty');
+
+    // Sumar todos los estados de todos los asesores activos
+    const totales = {};
+    asesores.filter(a => a.activo).forEach(a => {
+        const porEstado = a.estadisticas?.por_estado || {};
+        Object.entries(porEstado).forEach(([estado, cnt]) => {
+            totales[estado] = (totales[estado] || 0) + cnt;
+        });
+    });
+
+    if (_chartAsesorEstados) { _chartAsesorEstados.destroy(); _chartAsesorEstados = null; }
+
+    const etiquetas = Object.keys(totales);
+    if (!etiquetas.length) {
+        canvas.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+    }
+    canvas.style.display = 'block';
+    empty.style.display = 'none';
+
+    const coloresEstado = {
+        'Disponible':    '#27AE60',
+        'Contratado':    '#8E44AD',
+        'Por Finalizar': '#F39C12',
+        'Finalizó':      '#95A5A6',
+    };
+
+    _chartAsesorEstados = new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+            labels: etiquetas,
+            datasets: [{
+                data: etiquetas.map(e => totales[e]),
+                backgroundColor: etiquetas.map(e => coloresEstado[e] || '#2980B9'),
+                borderWidth: 2,
+                borderColor: '#fff',
+            }],
+        },
+        options: {
+            cutout: '62%',
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { size: 12 }, padding: 12 } },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ` ${ctx.label}: ${ctx.parsed} estudiante${ctx.parsed !== 1 ? 's' : ''}`,
+                    },
+                },
+            },
+        },
+    });
 }
 
 // ── Semáforo de contrato ──────────────────────────────────────────────────────
