@@ -611,11 +611,33 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+
     .sidebar {
         width: 100%;
         height: auto;
         position: relative;
-        padding: 20px;
+        padding: 15px 20px;
+    }
+
+    .logo {
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-align: left;
+    }
+
+    .logo img {
+        max-width: 60px;
+        margin-bottom: 0;
+    }
+
+    .logo h1 {
+        font-size: 15px;
     }
 
     .main-content {
@@ -630,37 +652,60 @@ body {
 
     .menu-item {
         flex: 1;
-        min-width: 100px;
-        font-size: 12px;
-        padding: 10px;
+        min-width: 70px;
+        font-size: 11px;
+        padding: 10px 8px;
         justify-content: center;
+        flex-direction: column;
+        gap: 4px;
+        text-align: center;
+    }
+
+    .menu-item .icon {
+        font-size: 20px;
     }
 
     .menu-item span:last-child {
-        display: none;
-    }
-
-    .menu-item.active span:last-child {
-        display: inline;
+        display: block;
+        font-size: 10px;
     }
 
     .header {
         flex-direction: column;
-        gap: 15px;
+        gap: 10px;
         align-items: flex-start;
+        padding: 15px 20px;
+    }
+
+    .header h2 {
+        font-size: 22px;
+    }
+
+    .header-actions {
+        width: 100%;
+    }
+
+    .header-actions .btn {
+        width: 100%;
+        justify-content: center;
     }
 
     .content {
-        padding: 20px;
+        padding: 15px;
     }
 
     .stats-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
     }
 
     .section-header {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .search-bar {
+        min-width: unset;
     }
 
     .search-bar input {
@@ -691,6 +736,10 @@ body {
 }
 
 @media (max-width: 480px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
     .stat-card {
         flex-direction: column;
         text-align: center;
@@ -701,7 +750,13 @@ body {
     }
 
     .modal-content {
+        width: 100%;
         padding: 20px;
+        border-radius: 12px 12px 0 0;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        max-height: 90vh;
     }
 
     #modal-title {
@@ -897,6 +952,41 @@ body {
 }
 
 /* Badges */
+/* ── CV Buttons ──────────────────────────────────────────────────────────── */
+
+.btn-cv-ver {
+    background: #1565C0;
+    color: white;
+    padding: 8px 12px;
+    font-size: 12px;
+}
+
+.btn-cv-ver:hover {
+    background: #0D47A1;
+}
+
+.btn-cv-up {
+    background: #2E7D32;
+    color: white;
+    padding: 8px 12px;
+    font-size: 12px;
+}
+
+.btn-cv-up:hover {
+    background: #1B5E20;
+}
+
+.btn-cv-del {
+    background: #757575;
+    color: white;
+    padding: 8px 12px;
+    font-size: 12px;
+}
+
+.btn-cv-del:hover {
+    background: #424242;
+}
+
 .badge {
     display: inline-block;
     padding: 4px 10px;
@@ -908,4 +998,56 @@ body {
     color: white;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+/* ── Modal Fecha Contrato ─────────────────────────────────────────────────── */
+.modal-contrato-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 1100;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-contrato-overlay.active {
+    display: flex;
+}
+
+.modal-contrato-card {
+    background: white;
+    border-radius: 12px;
+    padding: 28px 32px;
+    width: 360px;
+    max-width: 90%;
+    box-shadow: var(--shadow-md);
+}
+
+.modal-contrato-card h3 {
+    margin-bottom: 8px;
+    color: var(--primary-color);
+    font-size: 18px;
+}
+
+.modal-contrato-card p {
+    color: var(--text-light);
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.contrato-fecha-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+.modal-contrato-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
 }

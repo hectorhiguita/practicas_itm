@@ -178,8 +178,14 @@ function renderEstudiantes(estudiantes) {
                 <button class="btn btn-edit" onclick="editEstudiante(${est.id})">Editar</button>
                 <button class="btn btn-danger" onclick="deleteEstudiante(${est.id})">Eliminar</button>
                 ${est.estado_practica === 'Disponible' ? `
-                    <button class="btn btn-primary" onclick="changeEstudianteStatus(${est.id}, 'Contratado')">Contratar</button>
+                    <button class="btn btn-primary" onclick="abrirModalContrato(${est.id}, '${est.nombre} ${est.apellido}')">Contratar</button>
                 ` : ''}
+                ${est.tiene_cv ? `
+                    <button class="btn btn-cv-ver" onclick="verCV(${est.id})" title="Ver CV">📄 CV</button>
+                    <button class="btn btn-cv-del" onclick="eliminarCV(${est.id})" title="Eliminar CV">✕ CV</button>
+                ` : `
+                    <button class="btn btn-cv-up" onclick="abrirUploadCV(${est.id})" title="Subir CV">⬆ CV</button>
+                `}
             </div>
         </div>
     `).join('');
@@ -244,14 +250,47 @@ async function populateFacultadFilter() {
     }
 }
 
-async function changeEstudianteStatus(id, newStatus) {
+let _contratoEstudianteId = null;
+
+function abrirModalContrato(id, nombre) {
+    _contratoEstudianteId = id;
+    document.getElementById('contrato-nombre').textContent = nombre;
+    document.getElementById('contrato-fecha').value = '';
+    document.getElementById('modal-contrato').classList.add('active');
+}
+
+function cerrarModalContrato(event) {
+    if (event && event.target !== document.getElementById('modal-contrato')) return;
+    document.getElementById('modal-contrato').classList.remove('active');
+    _contratoEstudianteId = null;
+}
+
+async function confirmarContrato() {
+    const fecha = document.getElementById('contrato-fecha').value;
+    if (!fecha) {
+        showToast('Selecciona una fecha de inicio', true);
+        return;
+    }
+    document.getElementById('modal-contrato').classList.remove('active');
+    await changeEstudianteStatus(_contratoEstudianteId, 'Contratado', fecha);
+    _contratoEstudianteId = null;
+}
+
+function toggleFechaContrato(estado) {
+    const group = document.getElementById('fecha-contrato-group');
+    if (group) group.style.display = estado === 'Contratado' ? 'block' : 'none';
+}
+
+async function changeEstudianteStatus(id, newStatus, fechaInicio = null) {
     try {
+        const body = { estado: newStatus };
+        if (fechaInicio) body.fecha_inicio_contrato = fechaInicio;
         const res = await fetch(`${API_BASE}/estudiantes/${id}/estado`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ estado: newStatus })
+            body: JSON.stringify(body)
         });
-        
+
         if (res.ok) {
             showToast(`Estado actualizado a ${newStatus}`);
             loadEstudiantes();
@@ -349,15 +388,20 @@ async function editEstudiante(id) {
             </div>
             <div class="form-group">
                 <label for="estado_practica">Estado de Práctica *</label>
-                <select id="estado_practica" name="estado_practica" required>
+                <select id="estado_practica" name="estado_practica" required onchange="toggleFechaContrato(this.value)">
                     <option value="Disponible" ${estudiante.estado_practica === 'Disponible' ? 'selected' : ''}>Disponible</option>
                     <option value="Contratado" ${estudiante.estado_practica === 'Contratado' ? 'selected' : ''}>Contratado</option>
                     <option value="Por Finalizar" ${estudiante.estado_practica === 'Por Finalizar' ? 'selected' : ''}>Por Finalizar</option>
                     <option value="Finalizó" ${estudiante.estado_practica === 'Finalizó' ? 'selected' : ''}>Finalizó</option>
                 </select>
             </div>
+            <div class="form-group" id="fecha-contrato-group" style="display: ${estudiante.estado_practica === 'Contratado' ? 'block' : 'none'};">
+                <label for="fecha_inicio_contrato">Fecha de inicio del contrato</label>
+                <input type="date" id="fecha_inicio_contrato" name="fecha_inicio_contrato"
+                    value="${estudiante.fecha_inicio_contrato ? estudiante.fecha_inicio_contrato.substring(0, 10) : ''}">
+            </div>
         `;
-        
+
         // Filtrar carreras por facultad seleccionada
         setTimeout(() => {
             updateCarrerasFilter();
@@ -1090,6 +1134,131 @@ function renderImportResults(data) {
             `).join('')}
         </div>
     `;
+}
+
+// ── CV Functions ──────────────────────────────────────────────────────────────
+
+function verCV(estudianteId) {
+    window.open(`${API_BASE}/estudiantes/${estudianteId}/cv`, '_blank');
+}
+
+async function eliminarCV(estudianteId) {
+    if (!confirm('¿Eliminar el CV de este estudiante?')) return;
+    try {
+        const res = await fetch(`${API_BASE}/estudiantes/${estudianteId}/cv`, { method: 'DELETE' });
+        const data = await res.json();
+        if (res.ok) {
+            showToast('CV eliminado');
+            loadEstudiantes();
+        } else {
+            showToast(data.error || 'Error al eliminar CV', true);
+        }
+    } catch {
+        showToast('Error al eliminar CV', true);
+    }
+}
+
+function abrirUploadCV(estudianteId) {
+    const existing = document.getElementById('cv-upload-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'cv-upload-modal';
+    modal.className = 'modal active';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:460px">
+            <span class="close" onclick="cerrarUploadCV()">&times;</span>
+            <h2 style="margin-bottom:20px;color:var(--primary-color)">Subir CV</h2>
+            <p style="font-size:14px;color:var(--text-light);margin-bottom:20px">
+                Solo se aceptan archivos <strong>PDF</strong> (máx. 5 MB).
+            </p>
+            <div class="import-dropzone" id="cv-dropzone" onclick="document.getElementById('cv-file-input').click()">
+                <div class="dropzone-icon">⬆</div>
+                <p>Arrastra el PDF aquí o haz clic para seleccionar</p>
+                <p class="dropzone-hint">PDF · máx. 5 MB</p>
+                <input type="file" id="cv-file-input" accept=".pdf" style="display:none"
+                       onchange="handleCVFileSelect(this)">
+            </div>
+            <div id="cv-file-name" style="display:none" class="import-file-name"></div>
+            <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:20px">
+                <button class="btn btn-secondary" onclick="cerrarUploadCV()">Cancelar</button>
+                <button class="btn btn-primary" id="cv-submit-btn" onclick="subirCV(${estudianteId})" disabled>Subir</button>
+            </div>
+        </div>
+    `;
+    modal.addEventListener('click', e => { if (e.target === modal) cerrarUploadCV(); });
+
+    const dropzone = modal.querySelector('#cv-dropzone');
+    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file) setCVFile(file);
+    });
+
+    document.body.appendChild(modal);
+}
+
+function handleCVFileSelect(input) {
+    if (input.files[0]) setCVFile(input.files[0]);
+}
+
+function setCVFile(file) {
+    const nameEl = document.getElementById('cv-file-name');
+    const submitBtn = document.getElementById('cv-submit-btn');
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+        showToast('Solo se permiten archivos PDF', true);
+        return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('El archivo supera los 5 MB', true);
+        return;
+    }
+    nameEl.textContent = file.name;
+    nameEl.style.display = 'block';
+    submitBtn.disabled = false;
+    submitBtn._cvFile = file;
+}
+
+async function subirCV(estudianteId) {
+    const submitBtn = document.getElementById('cv-submit-btn');
+    const file = submitBtn._cvFile;
+    if (!file) return;
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Subiendo...';
+
+    try {
+        const formData = new FormData();
+        formData.append('cv', file);
+
+        const res = await fetch(`${API_BASE}/estudiantes/${estudianteId}/cv`, {
+            method: 'POST',
+            body: formData,
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            showToast('CV subido exitosamente');
+            cerrarUploadCV();
+            loadEstudiantes();
+        } else {
+            showToast(data.error || 'Error al subir CV', true);
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Subir';
+        }
+    } catch {
+        showToast('Error al subir CV', true);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Subir';
+    }
+}
+
+function cerrarUploadCV() {
+    const modal = document.getElementById('cv-upload-modal');
+    if (modal) modal.remove();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -197,7 +197,7 @@ class EstudianteService:
         return EstudianteService.obtener_estudiantes_por_estado(db, "disponible")
     
     @staticmethod
-    def actualizar_estado_practica(db: Session, estudiante_id: int, nuevo_estado: str) -> Optional[Estudiante]:
+    def actualizar_estado_practica(db: Session, estudiante_id: int, nuevo_estado: str, fecha_inicio_contrato: str = None) -> Optional[Estudiante]:
         """
         Actualiza el estado de práctica de un estudiante
         
@@ -234,10 +234,13 @@ class EstudianteService:
             raise ValueError(f"Estado inválido: {nuevo_estado}")
         
         estudiante.estado_practica = estado_enum
+        if estado_enum.value == 'Contratado' and fecha_inicio_contrato:
+            from datetime import datetime as dt
+            estudiante.fecha_inicio_contrato = dt.fromisoformat(fecha_inicio_contrato)
         db.commit()
         db.refresh(estudiante)
         return estudiante
-    
+
     @staticmethod
     def actualizar_estudiante(db: Session, estudiante_id: int, nombre: str = None,
                              apellido: str = None, email: str = None,
@@ -245,7 +248,8 @@ class EstudianteService:
                              facultad_id: int = None, carrera_id: int = None,
                              estado_practica: str = None,
                              tiene_discapacidad: str = None,
-                             discapacidad_personalizada: str = None) -> Optional[Estudiante]:
+                             discapacidad_personalizada: str = None,
+                             fecha_inicio_contrato: str = None) -> Optional[Estudiante]:
         """
         Actualiza datos de un estudiante
 
@@ -314,6 +318,10 @@ class EstudianteService:
 
         if discapacidad_personalizada is not None:
             estudiante.discapacidad_personalizada = discapacidad_personalizada or None
+
+        if fecha_inicio_contrato:
+            from datetime import datetime as dt
+            estudiante.fecha_inicio_contrato = dt.fromisoformat(fecha_inicio_contrato)
 
         db.commit()
         db.refresh(estudiante)

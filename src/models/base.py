@@ -2,7 +2,7 @@
 Modelos de base de datos para la aplicación
 """
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Enum as SQLEnum, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Enum as SQLEnum, ForeignKey, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from src.utils.enums import EstadoPractica, Genero
@@ -86,6 +86,12 @@ class Estudiante(Base):
     estado_practica = Column(SQLEnum(EstadoPractica), default=EstadoPractica.DISPONIBLE, nullable=False)
     facultad_id = Column(Integer, ForeignKey('facultades.id'), nullable=False)
     carrera_id = Column(Integer, ForeignKey('carreras.id'), nullable=False)
+    # CV
+    cv_s3_key = Column(String(500), nullable=True)
+    cv_filename = Column(String(255), nullable=True)
+    cv_upload_date = Column(DateTime, nullable=True)
+    # Contrato
+    fecha_inicio_contrato = Column(DateTime, nullable=True)
     fecha_creacion = Column(DateTime, default=datetime.utcnow)
     fecha_actualizacion = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -110,6 +116,10 @@ class Estudiante(Base):
             'estado_practica': self.estado_practica.value if self.estado_practica else None,
             'facultad_id': self.facultad_id,
             'carrera_id': self.carrera_id,
+            'cv_filename': self.cv_filename,
+            'cv_upload_date': self.cv_upload_date.isoformat() if self.cv_upload_date else None,
+            'tiene_cv': self.cv_s3_key is not None,
+            'fecha_inicio_contrato': self.fecha_inicio_contrato.isoformat() if self.fecha_inicio_contrato else None,
             'fecha_creacion': self.fecha_creacion.isoformat() if self.fecha_creacion else None,
             'fecha_actualizacion': self.fecha_actualizacion.isoformat() if self.fecha_actualizacion else None
         }

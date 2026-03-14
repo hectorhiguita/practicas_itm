@@ -139,6 +139,31 @@ def _seed_data(session):
     print(f"✓ Datos iniciales insertados: 4 facultades, {total_programas} programas")
 
 
+def _migrate_cv_columns():
+    """Agrega columnas de CV a estudiantes si no existen (migración idempotente)."""
+    cv_columns = [
+        ("cv_s3_key", "VARCHAR(500)"),
+        ("cv_filename", "VARCHAR(255)"),
+        ("cv_upload_date", "TIMESTAMP"),
+        ("fecha_inicio_contrato", "TIMESTAMP"),
+    ]
+    try:
+        with engine.connect() as conn:
+            for col_name, col_type in cv_columns:
+                result = conn.execute(text(
+                    "SELECT column_name FROM information_schema.columns "
+                    "WHERE table_name='estudiantes' AND column_name=:col"
+                ), {"col": col_name})
+                if not result.fetchone():
+                    conn.execute(text(
+                        f"ALTER TABLE estudiantes ADD COLUMN {col_name} {col_type}"
+                    ))
+                    conn.commit()
+                    print(f"✓ Columna '{col_name}' agregada a estudiantes")
+    except Exception as e:
+        print(f"Advertencia en migración CV: {e}")
+
+
 def init_database():
     """
     Inicializa todas las tablas y siembra datos si la BD está vacía.
@@ -150,6 +175,9 @@ def init_database():
         # Crear todas las tablas (no hace nada si ya existen)
         Base.metadata.create_all(bind=engine)
         print("✓ Tablas creadas exitosamente")
+
+        # Migración: columnas de CV para bases de datos existentes
+        _migrate_cv_columns()
 
         from sqlalchemy.orm import sessionmaker
         from src.models.base import Facultad

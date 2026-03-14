@@ -210,6 +210,22 @@
         </div>
     </div>
 
+    <!-- Modal Fecha Inicio Contrato -->
+    <div id="modal-contrato" class="modal-contrato-overlay" onclick="cerrarModalContrato(event)">
+        <div class="modal-contrato-card">
+            <h3>Fecha de inicio del contrato</h3>
+            <p>Estudiante: <strong id="contrato-nombre"></strong></p>
+            <div class="form-group" style="margin-top:16px;">
+                <label for="contrato-fecha">Fecha de inicio *</label>
+                <input type="date" id="contrato-fecha" class="contrato-fecha-input">
+            </div>
+            <div class="modal-contrato-actions">
+                <button class="btn btn-secondary" onclick="cerrarModalContrato()">Cancelar</button>
+                <button class="btn btn-primary" onclick="confirmarContrato()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast" class="toast"></div>
 
