@@ -139,6 +139,27 @@ def _seed_data(session):
     print(f"✓ Datos iniciales insertados: 4 facultades, {total_programas} programas")
 
 
+def _ensure_asesores_table():
+    """Crea la tabla asesores si no existe (migración explícita para BDs pre-existentes)."""
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS asesores (
+                    id SERIAL PRIMARY KEY,
+                    nombre VARCHAR(100) NOT NULL,
+                    apellido VARCHAR(100) NOT NULL,
+                    email VARCHAR(200) UNIQUE NOT NULL,
+                    telefono VARCHAR(20),
+                    activo BOOLEAN NOT NULL DEFAULT TRUE,
+                    fecha_creacion TIMESTAMP DEFAULT NOW()
+                )
+            """))
+            conn.commit()
+            print("✓ Tabla 'asesores' verificada/creada")
+    except Exception as e:
+        print(f"Advertencia al crear tabla asesores: {e}")
+
+
 def _migrate_cv_columns():
     """Agrega columnas de CV y asesor a estudiantes si no existen (migración idempotente)."""
     estudiante_columns = [
@@ -178,7 +199,8 @@ def init_database():
         Base.metadata.create_all(bind=engine)
         print("✓ Tablas creadas exitosamente")
 
-        # Migración: columnas de CV para bases de datos existentes
+        # Migración: asegurar tabla asesores y columnas de CV/asesor en estudiantes
+        _ensure_asesores_table()
         _migrate_cv_columns()
 
         from sqlalchemy.orm import sessionmaker
