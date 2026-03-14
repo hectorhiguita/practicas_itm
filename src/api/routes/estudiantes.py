@@ -156,6 +156,7 @@ def actualizar_estudiante(estudiante_id):
             estado_practica=datos.get('estado_practica'),
             tiene_discapacidad=datos.get('tiene_discapacidad'),
             discapacidad_personalizada=datos.get('discapacidad_personalizada'),
+            fecha_inicio_contrato=datos.get('fecha_inicio_contrato'),
         )
 
         if not estudiante_actualizado:
@@ -188,7 +189,8 @@ def actualizar_estado_practica(estudiante_id):
         estudiante_actualizado = EstudianteService.actualizar_estado_practica(
             db=db,
             estudiante_id=estudiante_id,
-            nuevo_estado=datos['estado']
+            nuevo_estado=datos['estado'],
+            fecha_inicio_contrato=datos.get('fecha_inicio_contrato')
         )
         
         if not estudiante_actualizado:

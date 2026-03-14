@@ -90,6 +90,8 @@ class Estudiante(Base):
     cv_s3_key = Column(String(500), nullable=True)
     cv_filename = Column(String(255), nullable=True)
     cv_upload_date = Column(DateTime, nullable=True)
+    # Contrato
+    fecha_inicio_contrato = Column(DateTime, nullable=True)
     fecha_creacion = Column(DateTime, default=datetime.utcnow)
     fecha_actualizacion = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -117,6 +119,7 @@ class Estudiante(Base):
             'cv_filename': self.cv_filename,
             'cv_upload_date': self.cv_upload_date.isoformat() if self.cv_upload_date else None,
             'tiene_cv': self.cv_s3_key is not None,
+            'fecha_inicio_contrato': self.fecha_inicio_contrato.isoformat() if self.fecha_inicio_contrato else None,
             'fecha_creacion': self.fecha_creacion.isoformat() if self.fecha_creacion else None,
             'fecha_actualizacion': self.fecha_actualizacion.isoformat() if self.fecha_actualizacion else None
         }

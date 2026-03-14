@@ -145,6 +145,7 @@ def _migrate_cv_columns():
         ("cv_s3_key", "VARCHAR(500)"),
         ("cv_filename", "VARCHAR(255)"),
         ("cv_upload_date", "TIMESTAMP"),
+        ("fecha_inicio_contrato", "TIMESTAMP"),
     ]
     try:
         with engine.connect() as conn:

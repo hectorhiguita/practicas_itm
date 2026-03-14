@@ -178,7 +178,7 @@ function renderEstudiantes(estudiantes) {
                 <button class="btn btn-edit" onclick="editEstudiante(${est.id})">Editar</button>
                 <button class="btn btn-danger" onclick="deleteEstudiante(${est.id})">Eliminar</button>
                 ${est.estado_practica === 'Disponible' ? `
-                    <button class="btn btn-primary" onclick="changeEstudianteStatus(${est.id}, 'Contratado')">Contratar</button>
+                    <button class="btn btn-primary" onclick="abrirModalContrato(${est.id}, '${est.nombre} ${est.apellido}')">Contratar</button>
                 ` : ''}
                 ${est.tiene_cv ? `
                     <button class="btn btn-cv-ver" onclick="verCV(${est.id})" title="Ver CV">📄 CV</button>
@@ -250,14 +250,47 @@ async function populateFacultadFilter() {
     }
 }
 
-async function changeEstudianteStatus(id, newStatus) {
+let _contratoEstudianteId = null;
+
+function abrirModalContrato(id, nombre) {
+    _contratoEstudianteId = id;
+    document.getElementById('contrato-nombre').textContent = nombre;
+    document.getElementById('contrato-fecha').value = '';
+    document.getElementById('modal-contrato').classList.add('active');
+}
+
+function cerrarModalContrato(event) {
+    if (event && event.target !== document.getElementById('modal-contrato')) return;
+    document.getElementById('modal-contrato').classList.remove('active');
+    _contratoEstudianteId = null;
+}
+
+async function confirmarContrato() {
+    const fecha = document.getElementById('contrato-fecha').value;
+    if (!fecha) {
+        showToast('Selecciona una fecha de inicio', true);
+        return;
+    }
+    document.getElementById('modal-contrato').classList.remove('active');
+    await changeEstudianteStatus(_contratoEstudianteId, 'Contratado', fecha);
+    _contratoEstudianteId = null;
+}
+
+function toggleFechaContrato(estado) {
+    const group = document.getElementById('fecha-contrato-group');
+    if (group) group.style.display = estado === 'Contratado' ? 'block' : 'none';
+}
+
+async function changeEstudianteStatus(id, newStatus, fechaInicio = null) {
     try {
+        const body = { estado: newStatus };
+        if (fechaInicio) body.fecha_inicio_contrato = fechaInicio;
         const res = await fetch(`${API_BASE}/estudiantes/${id}/estado`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ estado: newStatus })
+            body: JSON.stringify(body)
         });
-        
+
         if (res.ok) {
             showToast(`Estado actualizado a ${newStatus}`);
             loadEstudiantes();
@@ -355,15 +388,20 @@ async function editEstudiante(id) {
             </div>
             <div class="form-group">
                 <label for="estado_practica">Estado de Práctica *</label>
-                <select id="estado_practica" name="estado_practica" required>
+                <select id="estado_practica" name="estado_practica" required onchange="toggleFechaContrato(this.value)">
                     <option value="Disponible" ${estudiante.estado_practica === 'Disponible' ? 'selected' : ''}>Disponible</option>
                     <option value="Contratado" ${estudiante.estado_practica === 'Contratado' ? 'selected' : ''}>Contratado</option>
                     <option value="Por Finalizar" ${estudiante.estado_practica === 'Por Finalizar' ? 'selected' : ''}>Por Finalizar</option>
                     <option value="Finalizó" ${estudiante.estado_practica === 'Finalizó' ? 'selected' : ''}>Finalizó</option>
                 </select>
             </div>
+            <div class="form-group" id="fecha-contrato-group" style="display: ${estudiante.estado_practica === 'Contratado' ? 'block' : 'none'};">
+                <label for="fecha_inicio_contrato">Fecha de inicio del contrato</label>
+                <input type="date" id="fecha_inicio_contrato" name="fecha_inicio_contrato"
+                    value="${estudiante.fecha_inicio_contrato ? estudiante.fecha_inicio_contrato.substring(0, 10) : ''}">
+            </div>
         `;
-        
+
         // Filtrar carreras por facultad seleccionada
         setTimeout(() => {
             updateCarrerasFilter();
