@@ -140,17 +140,18 @@ def _seed_data(session):
 
 
 def _migrate_cv_columns():
-    """Agrega columnas de CV a estudiantes si no existen (migración idempotente)."""
-    cv_columns = [
+    """Agrega columnas de CV y asesor a estudiantes si no existen (migración idempotente)."""
+    estudiante_columns = [
         ("cv_s3_key", "VARCHAR(500)"),
         ("cv_filename", "VARCHAR(255)"),
         ("cv_upload_date", "TIMESTAMP"),
         ("fecha_inicio_contrato", "TIMESTAMP"),
         ("fecha_fin_contrato", "TIMESTAMP"),
+        ("asesor_id", "INTEGER REFERENCES asesores(id)"),
     ]
     try:
         with engine.connect() as conn:
-            for col_name, col_type in cv_columns:
+            for col_name, col_type in estudiante_columns:
                 result = conn.execute(text(
                     "SELECT column_name FROM information_schema.columns "
                     "WHERE table_name='estudiantes' AND column_name=:col"
@@ -162,7 +163,7 @@ def _migrate_cv_columns():
                     conn.commit()
                     print(f"✓ Columna '{col_name}' agregada a estudiantes")
     except Exception as e:
-        print(f"Advertencia en migración CV: {e}")
+        print(f"Advertencia en migración columnas: {e}")
 
 
 def init_database():

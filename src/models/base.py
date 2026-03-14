@@ -9,6 +9,38 @@ from src.utils.enums import EstadoPractica, Genero
 
 Base = declarative_base()
 
+
+class Asesor(Base):
+    """Modelo de Asesor de Prácticas"""
+    __tablename__ = 'asesores'
+
+    id = Column(Integer, primary_key=True)
+    nombre = Column(String(100), nullable=False)
+    apellido = Column(String(100), nullable=False)
+    email = Column(String(200), unique=True, nullable=False)
+    telefono = Column(String(20), nullable=True)
+    activo = Column(Boolean, default=True, nullable=False)
+    fecha_creacion = Column(DateTime, default=datetime.utcnow)
+
+    # Relación con estudiantes (un asesor → muchos estudiantes)
+    estudiantes = relationship('Estudiante', back_populates='asesor')
+
+    def __repr__(self):
+        return f"<Asesor(id={self.id}, nombre='{self.nombre} {self.apellido}')>"
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'nombre': self.nombre,
+            'apellido': self.apellido,
+            'nombre_completo': f"{self.nombre} {self.apellido}",
+            'email': self.email,
+            'telefono': self.telefono,
+            'activo': self.activo,
+            'fecha_creacion': self.fecha_creacion.isoformat() if self.fecha_creacion else None,
+        }
+
+
 class Facultad(Base):
     """Modelo de Facultad"""
     __tablename__ = 'facultades'
@@ -86,6 +118,7 @@ class Estudiante(Base):
     estado_practica = Column(SQLEnum(EstadoPractica), default=EstadoPractica.DISPONIBLE, nullable=False)
     facultad_id = Column(Integer, ForeignKey('facultades.id'), nullable=False)
     carrera_id = Column(Integer, ForeignKey('carreras.id'), nullable=False)
+    asesor_id = Column(Integer, ForeignKey('asesores.id'), nullable=True)
     # CV
     cv_s3_key = Column(String(500), nullable=True)
     cv_filename = Column(String(255), nullable=True)
@@ -99,6 +132,7 @@ class Estudiante(Base):
     # Relaciones
     facultad = relationship("Facultad", back_populates="estudiantes")
     carrera = relationship("Carrera", back_populates="estudiantes")
+    asesor = relationship("Asesor", back_populates="estudiantes")
     
     def __repr__(self):
         return f"<Estudiante(id={self.id}, nombre='{self.nombre}', documento='{self.numero_documento}')>"
@@ -122,6 +156,8 @@ class Estudiante(Base):
             'tiene_cv': self.cv_s3_key is not None,
             'fecha_inicio_contrato': self.fecha_inicio_contrato.isoformat() if self.fecha_inicio_contrato else None,
             'fecha_fin_contrato': self.fecha_fin_contrato.isoformat() if self.fecha_fin_contrato else None,
+            'asesor_id': self.asesor_id,
+            'asesor_nombre': f"{self.asesor.nombre} {self.asesor.apellido}" if self.asesor else None,
             'fecha_creacion': self.fecha_creacion.isoformat() if self.fecha_creacion else None,
             'fecha_actualizacion': self.fecha_actualizacion.isoformat() if self.fecha_actualizacion else None
         }

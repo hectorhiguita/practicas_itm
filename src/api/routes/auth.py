@@ -4,7 +4,7 @@ Actualmente soporta login local (usuario/contraseña).
 Preparado para agregar OAuth de Microsoft 365 / Azure AD en el futuro.
 """
 import hmac
-from flask import Blueprint, request, jsonify, redirect, url_for, send_file
+from flask import Blueprint, request, jsonify, redirect, url_for
 from flask_login import login_user, logout_user, current_user
 from werkzeug.security import check_password_hash
 import os
@@ -57,7 +57,8 @@ def login_page():
     if current_user.is_authenticated:
         return redirect('/')
     static_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'login.html')
-    return send_file(static_path)
+    with open(static_path, 'r', encoding='utf-8') as f:
+        return f.read(), 200, {'Content-Type': 'text/html; charset=utf-8'}
 
 
 @auth_bp.route('/login', methods=['POST'])
